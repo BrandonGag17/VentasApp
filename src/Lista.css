@@ -34,6 +34,7 @@
   text-align: left;
   width: 100%;
 }
+
 .lista-item:hover {
   border-color: var(--accent);
   background: #1e2133;
@@ -67,4 +68,18 @@
   font-family: var(--mono);
   font-size: 14px;
   color: var(--text);
+}
+
+.btn-eliminar {
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  font-size: 20px;
+  margin-left: 12px;
+  transition: transform .2s;
+  
+}
+
+.btn-eliminar:hover {
+  transform: scale(1.15);
 }

@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { supabase } from './supabaseClient'
 import './Productos.css'
+import * as XLSX from 'xlsx'
 
 function Productos() {
     const [productos, setProductos] = useState([])
@@ -24,6 +25,26 @@ function Productos() {
         prod.Nombre.toLowerCase().includes(busqueda.toLowerCase())
     )
 
+    async function exportExcel() {
+        if (!productos || productos.length === 0) {
+            alert('No hay productos para exportar')
+            return
+        }
+
+        const rows = productos.map(p => [
+            p.Nombre,
+            p.PrecioVenta ?? '',
+            p.PrecioCompra ?? ''
+        ])
+
+        const ws = XLSX.utils.aoa_to_sheet(rows)
+        const wb = XLSX.utils.book_new()
+        XLSX.utils.book_append_sheet(wb, ws, 'Productos')
+
+        const fileName = `productos_${new Date().toISOString().slice(0,10)}.xlsx`
+        XLSX.writeFile(wb, fileName)
+    }
+
     return (
         <div className="productos-page">
 
@@ -41,6 +62,9 @@ function Productos() {
                 />
                 <button className="btn btn-secondary" onClick={() => navigate('/importar-productos')}>
                     Importar Excel
+                </button>
+                <button className="btn btn-secondary" onClick={exportExcel}>
+                    Exportar Excel
                 </button>
             </div>
 
