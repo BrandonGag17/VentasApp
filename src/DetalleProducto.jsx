@@ -12,23 +12,23 @@ function DetalleProducto() {
     const [form, setForm] = useState(null)
 
     useEffect(() => {
-        traerProducto()
-    }, [])
+        async function traerProducto() {
+            const { data, error } = await supabase
+                .from('Productos')
+                .select('idProducto, Nombre, PrecioCompra, PrecioVenta, Stock, NombreProveedor, TipoProducto, ImagenUrl')
+                .eq('idProducto', id)
 
-    async function traerProducto() {
-        const { data, error } = await supabase
-            .from('Productos')
-            .select('*')
-            .eq('idProducto', id)
+            if (error) {
+                console.log(error)
+                return
+            }
 
-        if (error) {
-            console.log(error)
-            return
+            setProducto(data[0])
+            setForm(data[0])
         }
 
-        setProducto(data[0])
-        setForm(data[0])
-    }
+        traerProducto()
+    }, [id])
 
     const convertirPrecio = (precio) => {
         // Reemplazar coma por punto para que Number() lo interprete correctamente

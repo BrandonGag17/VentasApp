@@ -19,8 +19,12 @@ function CrearVenta() {
 
     useEffect(() => {
         async function cargarDatos() {
-            const { data: dataProductos } = await supabase.from('Productos').select('*')
-            const { data: dataClientes } = await supabase.from('Clientes').select('*')
+            const [respuestaProductos, respuestaClientes] = await Promise.all([
+                supabase.from('Productos').select('idProducto, Nombre, PrecioVenta, Stock'),
+                supabase.from('Clientes').select('idCliente, Nombre, Apellido')
+            ])
+            const { data: dataProductos } = respuestaProductos
+            const { data: dataClientes } = respuestaClientes
             if (dataProductos) setProductos(dataProductos)
             if (dataClientes) setClientes(dataClientes)
         }
@@ -41,11 +45,6 @@ function CrearVenta() {
     function agregarRenglon() {
         if (!productoSeleccionado) return alert("Seleccioná un producto")
         if (!cantidad || Number(cantidad) <= 0) return alert("Cantidad inválida")
-
-        if (productoSeleccionado.Stock - Number(cantidad) < 0) {
-            const confirmar = window.confirm(`No hay stock de ${productoSeleccionado.Nombre}, ¿agregar igual?`)
-            if (!confirmar) return
-        }
 
         // Buscamos si ya existe el producto con el MISMO precio en la lista
         const indexExistente = renglones.findIndex(
@@ -91,14 +90,14 @@ function CrearVenta() {
 
         const idVenta = ventaCreada[0].idVenta
 
-        for (const renglon of renglones) {
-            await supabase.from('DetalleVentas').insert([{
+        const { error: errorDetalles } = await supabase.from('DetalleVentas').insert(renglones.map(renglon => ({
                 idVenta: idVenta,
                 idProducto: renglon.producto.idProducto,
                 CantidadUnidades: renglon.cantidad,
                 PrecioVentaUnitario: renglon.precioFinal // Se guarda el precio editado
-            }])
-        }
+        })))
+
+        if (errorDetalles) return alert("Error al agregar los productos de la venta")
 
         alert("Venta creada ✅")
         navigate('/')

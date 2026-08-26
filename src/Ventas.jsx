@@ -9,17 +9,16 @@ function Ventas() {
     const navigate = useNavigate()
 
     useEffect(() => {
+        async function cargarVentas() {
+            const { data, error } = await supabase
+                .from('Ventas')
+                .select('idVenta, fecha, total, estado, Clientes(Nombre, Apellido)')
+                .order('fecha', { ascending: false })
+
+            if (!error) setVentas(data)
+        }
         cargarVentas()
     }, [])
-
-    async function cargarVentas() {
-        const { data, error } = await supabase
-            .from('Ventas')
-            .select('idVenta, fecha, total, estado, Clientes(Nombre, Apellido)')
-
-        if (error) return
-        setVentas(data)
-    }
     async function eliminarVenta(idVenta) {
         const confirmar = window.confirm(
             "¿Estás seguro de que querés eliminar esta venta?"
@@ -38,7 +37,7 @@ function Ventas() {
             return
         }
 
-        setVentas(ventas.filter(v => v.idVenta !== idVenta))
+        setVentas(ventasActuales => ventasActuales.filter(v => v.idVenta !== idVenta))
     }
 
     return (
@@ -52,8 +51,8 @@ function Ventas() {
             </div>
 
             <div className="lista-items">
-                {ventas.map((venta, index) => (
-                    <button className="lista-item" key={index} onClick={() => navigate(`/venta/${venta.idVenta}`)}>
+                {ventas.map(venta => (
+                    <button className="lista-item" key={venta.idVenta} onClick={() => navigate(`/venta/${venta.idVenta}`)}>
                         <div className="lista-item-info">
                             <span className="lista-item-titulo">
                                 {venta.Clientes?.Nombre} {venta.Clientes?.Apellido}

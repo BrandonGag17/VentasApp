@@ -9,17 +9,15 @@ function Clientes() {
     const navigate = useNavigate()
 
     useEffect(() => {
+        async function cargarClientes() {
+            const { data, error } = await supabase
+                .from('Clientes')
+                .select('idCliente, Nombre, Apellido, Email')
+
+            if (!error) setClientes(data)
+        }
         cargarClientes()
     }, [])
-
-    async function cargarClientes() {
-        const { data, error } = await supabase
-            .from('Clientes')
-            .select('*')
-
-        if (error) return
-        setClientes(data)
-    }
 
     return (
         <div className="lista-page">
@@ -32,8 +30,8 @@ function Clientes() {
             </div>
 
             <div className="lista-items">
-                {clientes.map((cli, index) => (
-                    <button className="lista-item" key={index} onClick={() => navigate(`/cliente/${cli.idCliente}`)}>
+                {clientes.map(cli => (
+                    <button className="lista-item" key={cli.idCliente} onClick={() => navigate(`/cliente/${cli.idCliente}`)}>
                         <div className="lista-item-info">
                             <span className="lista-item-titulo">{cli.Nombre} {cli.Apellido}</span>
                             <span className="lista-item-subtitulo">{cli.Email}</span>

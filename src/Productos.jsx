@@ -2,7 +2,6 @@ import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { supabase } from './supabaseClient'
 import './Productos.css'
-import * as XLSX from 'xlsx'
 
 function Productos() {
     const [productos, setProductos] = useState([])
@@ -16,7 +15,7 @@ function Productos() {
     async function cargarProductos() {
         const { data, error } = await supabase
             .from('Productos')
-            .select('*')
+            .select('idProducto, Nombre, PrecioVenta, PrecioCompra, Stock, ImagenUrl')
 
         if (error) return
         setProductos(data)
@@ -31,6 +30,7 @@ function Productos() {
             return
         }
 
+        const XLSX = await import('xlsx')
         const rows = productos.map(p => [
             p.Nombre,
             p.PrecioVenta ?? '',
@@ -69,8 +69,8 @@ function Productos() {
             </div>
 
             <div className="productos-lista">
-                {productosFiltrados.map((prod, index) => (
-                    <button className="producto-item" key={index} onClick={() => navigate(`/producto/${prod.idProducto}`)}>
+                {productosFiltrados.map(prod => (
+                    <button className="producto-item" key={prod.idProducto} onClick={() => navigate(`/producto/${prod.idProducto}`)}>
                         {prod.ImagenUrl && (
                             <img src={prod.ImagenUrl} alt={prod.Nombre} />
                         )}

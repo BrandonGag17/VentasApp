@@ -1,7 +1,6 @@
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { useParams } from 'react-router-dom'
 import { supabase } from './supabaseClient'
-import jsPDF from 'jspdf'
 import './DetalleVenta.css'
 
 function DetalleVenta() {
@@ -14,17 +13,14 @@ function DetalleVenta() {
     const [todosLosProductos, setTodosLosProductos] = useState([])
     const [busqueda, setBusqueda] = useState('')
 
-    useEffect(() => {
-        traerVenta()
-        cargarProductos()
+    const cargarProductos = useCallback(async () => {
+        const { data } = await supabase
+            .from('Productos')
+            .select('idProducto, Nombre, PrecioVenta')
+        setTodosLosProductos(data || [])
     }, [])
 
-    async function cargarProductos() {
-        const { data } = await supabase.from('Productos').select('*')
-        setTodosLosProductos(data || [])
-    }
-
-    async function traerVenta() {
+    const traerVenta = useCallback(async () => {
         const { data, error } = await supabase
             .from('Ventas')
             .select(`
@@ -38,7 +34,12 @@ function DetalleVenta() {
         if (error) return console.log(error)
         setVenta(data)
         setForm(JSON.parse(JSON.stringify(data))) // Clonado profundo para evitar problemas de referencia
-    }
+    }, [id])
+
+    useEffect(() => {
+        traerVenta()
+        cargarProductos()
+    }, [traerVenta, cargarProductos])
 
     const sugerencias = todosLosProductos.filter(p =>
         p.Nombre.toLowerCase().includes(busqueda.toLowerCase()) && busqueda !== ''
@@ -85,13 +86,6 @@ function DetalleVenta() {
     }
 
     if (!venta || !form) return <p>Cargando...</p>
-    const calcularTotalForm = () => {
-        if (!form || !form.DetalleVentas) return 0;
-        return form.DetalleVentas.reduce((acc, det) => {
-            return acc + (Number(det.CantidadUnidades) * Number(det.PrecioVentaUnitario));
-        }, 0);
-    };
-
     // Función para calcular el total dinámico mientras se edita
     const totalVenta =
         form?.DetalleVentas?.reduce((acc, det) => {
@@ -100,7 +94,8 @@ function DetalleVenta() {
                 Number(det.PrecioVentaUnitario)
             )
         }, 0) || 0
-    function generarPDF() {
+    async function generarPDF() {
+        const { default: jsPDF } = await import('jspdf')
         const doc = new jsPDF()
 
         doc.setFontSize(18)

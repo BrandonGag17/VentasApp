@@ -1,7 +1,6 @@
 import { useState } from 'react'
 import { supabase } from './supabaseClient'
 import { useNavigate } from 'react-router-dom'
-import * as XLSX from 'xlsx'
 import './Form.css'
 
 function esNo(valor) {
@@ -16,16 +15,14 @@ function convertirNumero(valor) {
 function ImportarProductos() {
 
     const navigate = useNavigate()
-    const [archivo, setArchivo] = useState(null)
     const [preview, setPreview] = useState([])
     const [cargando, setCargando] = useState(false)
     function handleArchivo(e) {
         const file = e.target.files[0]
         if (!file) return
-        setArchivo(file)
-
         const reader = new FileReader()
-        reader.onload = (event) => {
+        reader.onload = async (event) => {
+            const XLSX = await import('xlsx')
             const workbook = XLSX.read(event.target.result, { type: 'binary' })
             const hoja = workbook.Sheets[workbook.SheetNames[0]]
             const filas = XLSX.utils.sheet_to_json(hoja, { header: 1 })
@@ -60,23 +57,23 @@ function ImportarProductos() {
 
         setCargando(true)
 
-        for (const fila of preview) {
-            const { error } = await supabase
-                .from('Productos')
-                .insert([{
-                    Nombre: fila.Nombre,
-                    PrecioCompra: Number(fila.PrecioCompra),
-                    PrecioVenta: Number(fila.PrecioVenta),
-                    NombreProveedor: fila.NombreProveedor,
-                    TipoProducto: fila.TipoProducto,
-                    Stock: Number(fila.Stock)
-                }])
+        const productosParaInsertar = preview.map(fila => ({
+            Nombre: fila.Nombre,
+            PrecioCompra: fila.PrecioCompra == null ? 0 : Number(fila.PrecioCompra),
+            PrecioVenta: Number(fila.PrecioVenta),
+            NombreProveedor: fila.NombreProveedor,
+            TipoProducto: fila.TipoProducto,
+            Stock: Number(fila.Stock)
+        }))
 
-            if (error) {
-                alert(`Error al importar ${fila.Nombre}`)
-                setCargando(false)
-                return
-            }
+        const { error } = await supabase
+            .from('Productos')
+            .insert(productosParaInsertar)
+
+        if (error) {
+            alert('Error al importar los productos')
+            setCargando(false)
+            return
         }
 
         setCargando(false)
