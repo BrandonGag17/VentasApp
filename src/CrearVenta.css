@@ -50,3 +50,64 @@
   font-size: 15px;
   color: var(--accent);
 }
+
+.detalle-edicion-producto {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.tabla-productos {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.renglon-item {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto auto auto auto;
+  align-items: center;
+  gap: 10px;
+  padding: 12px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  font-size: 13px;
+}
+
+.renglon-item span:first-child {
+  overflow-wrap: anywhere;
+}
+
+.btn-finalizar {
+  width: 100%;
+}
+
+@media (max-width: 600px) {
+  .crear-venta-page {
+    padding: 28px 14px;
+  }
+
+  .renglon-item {
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 5px 8px;
+  }
+
+  .renglon-item span:not(:first-child) {
+    font-size: 12px;
+  }
+
+  .renglon-item span:nth-child(2) {
+    grid-column: 1;
+  }
+
+  .renglon-item span:nth-child(3),
+  .renglon-item span:nth-child(4),
+  .renglon-item button {
+    grid-row: 1 / span 2;
+  }
+
+  .renglon-item button {
+    grid-column: 2;
+  }
+}

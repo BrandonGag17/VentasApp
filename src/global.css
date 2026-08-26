@@ -29,6 +29,12 @@ body {
   font-size: 15px;
   line-height: 1.6;
   min-height: 100vh;
+  overflow-x: hidden;
+}
+
+#root {
+  width: 100%;
+  min-height: 100vh;
 }
 
 h2 {
@@ -126,3 +132,14 @@ select option { background: var(--surface); }
 .badge-activa    { background: #1a3a2a; color: var(--success); }
 .badge-modificada { background: #2a2a1a; color: #f0c040; }
 .badge-cancelada  { background: #2a1a1a; color: var(--danger); }
+
+@media (max-width: 600px) {
+  h2 {
+    font-size: 20px;
+  }
+
+  .btn {
+    min-height: 42px;
+    padding: 9px 14px;
+  }
+}

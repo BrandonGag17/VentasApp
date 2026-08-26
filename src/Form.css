@@ -33,3 +33,19 @@
   display: flex;
   gap: 10px;
 }
+
+@media (max-width: 600px) {
+  .form-page {
+    padding: 28px 14px;
+  }
+
+  .form-acciones {
+    flex-direction: column;
+  }
+
+  .form-acciones .btn,
+  .form-page > .btn {
+    width: 100%;
+    justify-content: center;
+  }
+}

@@ -83,3 +83,48 @@
 .btn-eliminar:hover {
   transform: scale(1.15);
 }
+
+@media (max-width: 600px) {
+  .lista-page {
+    padding: 28px 14px;
+  }
+
+  .lista-header {
+    align-items: stretch;
+    flex-direction: column;
+    gap: 14px;
+    margin-bottom: 22px;
+  }
+
+  .lista-header .btn {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .lista-item {
+    gap: 10px;
+    padding: 13px 12px;
+  }
+
+  .lista-item-info {
+    min-width: 0;
+  }
+
+  .lista-item-titulo,
+  .lista-item-subtitulo {
+    overflow-wrap: anywhere;
+  }
+
+  .lista-item-derecha {
+    flex-shrink: 0;
+    gap: 6px;
+  }
+
+  .lista-item-total {
+    font-size: 12px;
+  }
+
+  .btn-eliminar {
+    margin-left: 2px;
+  }
+}

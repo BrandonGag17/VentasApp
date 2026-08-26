@@ -63,3 +63,39 @@
 .producto-item-arrow {
   display: none;
 }
+
+@media (max-width: 600px) {
+  .productos-page {
+    padding: 28px 14px;
+  }
+
+  .productos-header {
+    align-items: stretch;
+    flex-direction: column;
+    margin-bottom: 20px;
+  }
+
+  .productos-header .btn,
+  .productos-toolbar .btn,
+  .productos-page > .btn {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .productos-toolbar {
+    align-items: stretch;
+    flex-direction: column;
+    margin-bottom: 22px;
+  }
+
+  .productos-lista {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px;
+  }
+
+  .producto-item {
+    min-width: 0;
+    padding: 12px 8px;
+    overflow-wrap: anywhere;
+  }
+}

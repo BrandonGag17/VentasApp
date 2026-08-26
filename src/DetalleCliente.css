@@ -22,3 +22,18 @@
   display: flex;
   gap: 10px;
 }
+
+@media (max-width: 600px) {
+  .detalle-cliente-page {
+    padding: 28px 14px;
+  }
+
+  .detalle-cliente-acciones {
+    flex-direction: column;
+  }
+
+  .detalle-cliente-acciones .btn {
+    width: 100%;
+    justify-content: center;
+  }
+}

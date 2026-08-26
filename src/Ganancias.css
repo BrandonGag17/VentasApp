@@ -64,3 +64,37 @@
 .ganancia-card-valor.positivo { color: var(--success); }
 .ganancia-card-valor.neutro   { color: var(--text); }
 .ganancia-card-valor.negativo { color: var(--danger); }
+
+@media (max-width: 600px) {
+  .ganancias-page {
+    padding: 28px 14px;
+  }
+
+  .ganancias-filtros {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .ganancias-filtro-campo {
+    min-width: 0;
+  }
+
+  .ganancias-filtros .btn {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .ganancia-card {
+    gap: 12px;
+    padding: 16px;
+  }
+
+  .ganancia-card-label {
+    overflow-wrap: anywhere;
+  }
+
+  .ganancia-card-valor {
+    flex-shrink: 0;
+    font-size: 18px;
+  }
+}

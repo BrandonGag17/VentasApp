@@ -30,3 +30,22 @@
 .nav-link:active {
   background-color: #3498db;
 }
+
+@media (max-width: 600px) {
+  .header {
+    padding: 10px 12px;
+  }
+
+  .nav {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 6px;
+  }
+
+  .nav-link {
+    min-width: 0;
+    padding: 9px 6px;
+    text-align: center;
+    font-size: 14px;
+  }
+}
