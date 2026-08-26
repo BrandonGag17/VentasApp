@@ -4,6 +4,15 @@ import { useNavigate } from 'react-router-dom'
 import * as XLSX from 'xlsx'
 import './Form.css'
 
+function esNo(valor) {
+    return String(valor ?? '').trim().toLowerCase() === 'no'
+}
+
+function convertirNumero(valor) {
+    if (typeof valor === 'number') return valor
+    return Number(String(valor ?? '').trim().replace(',', '.'))
+}
+
 function ImportarProductos() {
 
     const navigate = useNavigate()
@@ -23,14 +32,20 @@ function ImportarProductos() {
 
             const productos = filas
                 .filter(fila => fila[0] && fila[1] && fila[0] !== 'Tabla 1')
-                .map(fila => ({
-                    Nombre: fila[0],
-                    PrecioVenta: Number(fila[1]),
-                    PrecioCompra: Number(fila[2]),
-                    Stock: 0,
-                    NombreProveedor: '',
-                    TipoProducto: ''
-                }))
+                .map(fila => {
+                    const sinPrecioCompra = esNo(fila[2]) || fila[2] === '' || fila[2] == null
+                    const cuartoValorEsNo = esNo(fila[3])
+                    const stockImportado = convertirNumero(fila[3])
+
+                    return {
+                        Nombre: fila[0],
+                        PrecioVenta: convertirNumero(fila[1]),
+                        PrecioCompra: sinPrecioCompra ? null : convertirNumero(fila[2]),
+                        Stock: sinPrecioCompra || cuartoValorEsNo || !Number.isFinite(stockImportado) ? 0 : stockImportado,
+                        NombreProveedor: '',
+                        TipoProducto: ''
+                    }
+                })
 
             setPreview(productos)
         }
@@ -84,7 +99,9 @@ function ImportarProductos() {
                 <div className="form-campo">
                     <label className="form-label">{preview.length} productos encontrados</label>
                     {preview.map((fila, index) => (
-                        <p key={index}>{fila.Nombre} — ${fila.PrecioVenta}</p>
+                        <p key={index}>
+                            {fila.Nombre} — venta: ${fila.PrecioVenta} — compra: {fila.PrecioCompra == null ? 'sin precio' : `$${fila.PrecioCompra}`} — stock: {fila.Stock}
+                        </p>
                     ))}
                 </div>
             )}
