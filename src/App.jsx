@@ -10,6 +10,7 @@ import Ventas from './Ventas'
 import Ganancias from './Ganancias'
 import DetalleVenta from './DetalleVenta'
 import ImportarProductos from './ImportarProductos'
+import DetalleCliente from './DetalleCliente'
 
 
 function App() {
@@ -23,6 +24,7 @@ function App() {
         <Route path="/crear-venta" element={<CrearVenta />} />
         <Route path="/crear-cliente" element={<CrearCliente />} />
         <Route path="/clientes" element={<Clientes />} />
+        <Route path="/cliente/:id" element={<DetalleCliente />} />
         <Route path="/ventas" element={<Ventas />} />
         <Route path="/ganancias" element={<Ganancias />} />
         <Route path="/venta/:id" element={<DetalleVenta />} />

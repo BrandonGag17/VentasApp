@@ -4,25 +4,42 @@ import { supabase } from './supabaseClient'
 import './Productos.css'
 
 function Productos() {
+    const PRODUCTOS_POR_PAGINA = 40
     const [productos, setProductos] = useState([])
     const navigate = useNavigate()
     const [busqueda, setBusqueda] = useState('')
+    const [pagina, setPagina] = useState(0)
+    const [hayMasProductos, setHayMasProductos] = useState(true)
+    const [cargando, setCargando] = useState(false)
 
     useEffect(() => {
-        cargarProductos()
-    }, [])
+        const temporizador = setTimeout(() => {
+            cargarProductos(0, false, busqueda)
+        }, 300)
 
-    async function cargarProductos() {
+        return () => clearTimeout(temporizador)
+    }, [busqueda])
+
+    async function cargarProductos(numeroPagina, agregar, termino) {
+        setCargando(true)
         const { data, error } = await supabase
             .from('Productos')
             .select('idProducto, Nombre, PrecioVenta, PrecioCompra, Stock, ImagenUrl')
+            .ilike('Nombre', `%${termino}%`)
+            .order('idProducto', { ascending: true })
+            .range(numeroPagina * PRODUCTOS_POR_PAGINA, (numeroPagina + 1) * PRODUCTOS_POR_PAGINA - 1)
 
-        if (error) return
-        setProductos(data)
+        if (!error) {
+            setProductos(productosActuales => agregar ? [...productosActuales, ...data] : data)
+            setPagina(numeroPagina)
+            setHayMasProductos(data.length === PRODUCTOS_POR_PAGINA)
+        }
+        setCargando(false)
     }
-    const productosFiltrados = productos.filter(prod =>
-        prod.Nombre.toLowerCase().includes(busqueda.toLowerCase())
-    )
+
+    function cargarMasProductos() {
+        cargarProductos(pagina + 1, true, busqueda)
+    }
 
     async function exportExcel() {
         if (!productos || productos.length === 0) {
@@ -69,7 +86,7 @@ function Productos() {
             </div>
 
             <div className="productos-lista">
-                {productosFiltrados.map(prod => (
+                {productos.map(prod => (
                     <button className="producto-item" key={prod.idProducto} onClick={() => navigate(`/producto/${prod.idProducto}`)}>
                         {prod.ImagenUrl && (
                             <img src={prod.ImagenUrl} alt={prod.Nombre} />
@@ -78,6 +95,12 @@ function Productos() {
                     </button>
                 ))}
             </div>
+
+            {hayMasProductos && (
+                <button className="btn btn-secondary" onClick={cargarMasProductos} disabled={cargando}>
+                    {cargando ? 'Cargando...' : 'Cargar más'}
+                </button>
+            )}
 
         </div>
     )
