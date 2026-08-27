@@ -5,6 +5,7 @@ import './CrearVenta.css'
 
 function CrearVenta() {
     const navigate = useNavigate()
+    const PRODUCTOS_POR_PAGINA = 1000
 
     const [productos, setProductos] = useState([])
     const [clientes, setClientes] = useState([])
@@ -19,13 +20,32 @@ function CrearVenta() {
 
     useEffect(() => {
         async function cargarDatos() {
-            const [respuestaProductos, respuestaClientes] = await Promise.all([
-                supabase.from('Productos').select('idProducto, Nombre, PrecioVenta, Stock'),
-                supabase.from('Clientes').select('idCliente, Nombre, Apellido')
-            ])
-            const { data: dataProductos } = respuestaProductos
-            const { data: dataClientes } = respuestaClientes
-            if (dataProductos) setProductos(dataProductos)
+            const productosCargados = []
+            let pagina = 0
+            let hayMasProductos = true
+
+            while (hayMasProductos) {
+                const { data, error } = await supabase
+                    .from('Productos')
+                    .select('idProducto, Nombre, PrecioVenta, Stock')
+                    .order('idProducto', { ascending: true })
+                    .range(pagina * PRODUCTOS_POR_PAGINA, (pagina + 1) * PRODUCTOS_POR_PAGINA - 1)
+
+                if (error) {
+                    console.error(error)
+                    break
+                }
+
+                productosCargados.push(...data)
+                hayMasProductos = data.length === PRODUCTOS_POR_PAGINA
+                pagina += 1
+            }
+
+            const { data: dataClientes } = await supabase
+                .from('Clientes')
+                .select('idCliente, Nombre, Apellido')
+
+            setProductos(productosCargados)
             if (dataClientes) setClientes(dataClientes)
         }
         cargarDatos()
@@ -33,7 +53,7 @@ function CrearVenta() {
 
     // Filtrado de productos para el buscador
     const sugerencias = productos.filter(p =>
-        p.Nombre.toLowerCase().includes(busqueda.toLowerCase()) && busqueda !== ''
+        busqueda !== '' && String(p.Nombre ?? '').toLowerCase().includes(busqueda.toLowerCase())
     )
 
     function seleccionarProducto(prod) {
