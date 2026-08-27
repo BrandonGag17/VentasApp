@@ -24,6 +24,64 @@
   min-width: 140px;
 }
 
+.ganancias-filtro-producto {
+  flex-basis: 100%;
+}
+
+.ganancias-todos {
+  align-self: flex-start;
+  margin-top: 8px;
+  padding: 8px 12px;
+  color: var(--text);
+  background: transparent;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  cursor: pointer;
+}
+
+.ganancias-todos.activo {
+  color: var(--success);
+  border-color: var(--success);
+}
+
+.ganancias-productos-lista {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px 16px;
+  max-height: 180px;
+  margin-top: 10px;
+  padding: 10px;
+  overflow-y: auto;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+}
+
+.ganancias-producto-opcion {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+  text-align: left;
+  cursor: pointer;
+}
+
+.ganancias-producto-opcion span {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.ganancias-producto-opcion input[type="checkbox"] {
+  width: auto;
+  flex: 0 0 auto;
+}
+
+.ganancias-productos-seleccionados {
+  margin-top: 8px;
+  color: var(--muted);
+  font-size: 12px;
+}
+
 .ganancias-filtro-label {
   font-size: 12px;
   color: var(--muted);
@@ -82,6 +140,10 @@
   .ganancias-filtros .btn {
     width: 100%;
     justify-content: center;
+  }
+
+  .ganancias-productos-lista {
+    grid-template-columns: 1fr;
   }
 
   .ganancia-card {
