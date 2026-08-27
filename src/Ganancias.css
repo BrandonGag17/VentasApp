@@ -28,15 +28,26 @@
   flex-basis: 100%;
 }
 
-.ganancias-todos {
-  align-self: flex-start;
+.ganancias-acciones-productos {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
   margin-top: 8px;
+}
+
+.ganancias-todos,
+.ganancias-deseleccionar {
   padding: 8px 12px;
   color: var(--text);
   background: transparent;
   border: 1px solid var(--border);
   border-radius: var(--radius);
   cursor: pointer;
+}
+
+.ganancias-deseleccionar:disabled {
+  cursor: not-allowed;
+  opacity: 0.45;
 }
 
 .ganancias-todos.activo {
@@ -122,6 +133,65 @@
 .ganancia-card-valor.positivo { color: var(--success); }
 .ganancia-card-valor.neutro   { color: var(--text); }
 .ganancia-card-valor.negativo { color: var(--danger); }
+
+.ganancias-spinner {
+  display: inline-block;
+  width: 14px;
+  height: 14px;
+  margin-right: 8px;
+  vertical-align: -2px;
+  border: 2px solid currentColor;
+  border-right-color: transparent;
+  border-radius: 50%;
+  animation: ganancias-girar 0.7s linear infinite;
+}
+
+@keyframes ganancias-girar {
+  to { transform: rotate(360deg); }
+}
+
+.ganancias-por-producto {
+  margin-top: 20px;
+}
+
+.ganancias-por-producto h3 {
+  margin: 0 0 12px;
+  font-size: 16px;
+}
+
+.ganancia-producto-fila {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+  padding: 14px 16px;
+  border-bottom: 1px solid var(--border);
+}
+
+.ganancia-producto-fila div {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+
+.ganancia-producto-fila strong {
+  overflow-wrap: anywhere;
+}
+
+.ganancia-producto-fila span {
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.ganancia-producto-fila .ganancia-producto-valor {
+  flex-shrink: 0;
+  font-family: var(--mono);
+  font-size: 16px;
+}
+
+.ganancia-producto-valor.positivo { color: var(--success); }
+.ganancia-producto-valor.negativo { color: var(--danger); }
 
 @media (max-width: 600px) {
   .ganancias-page {

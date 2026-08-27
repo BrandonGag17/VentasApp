@@ -16,6 +16,7 @@ function Ganancias() {
     const [busquedaProducto, setBusquedaProducto] = useState('')
     const [productosSeleccionados, setProductosSeleccionados] = useState([])
     const [resultado, setResultado] = useState(null)
+    const [cargandoGanancias, setCargandoGanancias] = useState(false)
 
     useEffect(() => {
         async function cargarProductos() {
@@ -72,12 +73,14 @@ function Ganancias() {
             return
         }
 
+        setCargandoGanancias(true)
+
         let consulta = supabase
             .from('DetalleVentas')
             .select(`
                 CantidadUnidades,
                 PrecioVentaUnitario,
-                Productos(PrecioCompra),
+                Productos(idProducto, Nombre, PrecioCompra),
                 Ventas!inner(fecha, estado)
             `)
             .gte('Ventas.fecha', fechaLocalAISO(desdeFecha))
@@ -91,23 +94,47 @@ function Ganancias() {
         const { data, error } = await consulta
 
         if (error || !data) {
+            setCargandoGanancias(false)
             alert("Error al consultar")
             return
         }
 
         let ingresos = 0
         let costos = 0
+        const gananciasPorProducto = new Map()
 
         data.forEach(detalle => {
-            ingresos += Number(detalle.PrecioVentaUnitario) * Number(detalle.CantidadUnidades)
-            costos += Number(detalle.Productos?.PrecioCompra ?? 0) * Number(detalle.CantidadUnidades)
+            const cantidad = Number(detalle.CantidadUnidades)
+            const ingreso = Number(detalle.PrecioVentaUnitario) * cantidad
+            const costo = Number(detalle.Productos?.PrecioCompra ?? 0) * cantidad
+            const idProducto = detalle.Productos?.idProducto ?? 'sin-producto'
+
+            ingresos += ingreso
+            costos += costo
+
+            const productoActual = gananciasPorProducto.get(idProducto) ?? {
+                idProducto,
+                nombre: detalle.Productos?.Nombre ?? 'Producto sin nombre',
+                cantidad: 0,
+                ingresos: 0,
+                costos: 0
+            }
+            productoActual.cantidad += cantidad
+            productoActual.ingresos += ingreso
+            productoActual.costos += costo
+            gananciasPorProducto.set(idProducto, productoActual)
         })
 
         setResultado({
             ingresos,
             costos,
-            ganancia: ingresos - costos
+            ganancia: ingresos - costos,
+            productos: Array.from(gananciasPorProducto.values()).map(producto => ({
+                ...producto,
+                ganancia: producto.ingresos - producto.costos
+            }))
         })
+        setCargandoGanancias(false)
     }
 
     return (
@@ -131,13 +158,23 @@ function Ganancias() {
                         onChange={(e) => setBusquedaProducto(e.target.value)}
                         placeholder="Buscar producto..."
                     />
-                    <button
-                        type="button"
-                        className={`ganancias-todos ${productosSeleccionados.length === 0 ? 'activo' : ''}`}
-                        onClick={() => setProductosSeleccionados([])}
-                    >
-                        Todos los productos
-                    </button>
+                    <div className="ganancias-acciones-productos">
+                        <button
+                            type="button"
+                            className={`ganancias-todos ${productos.length > 0 && productosSeleccionados.length === productos.length ? 'activo' : ''}`}
+                            onClick={() => setProductosSeleccionados(productos.map(producto => producto.idProducto))}
+                        >
+                            Todos los productos
+                        </button>
+                        <button
+                            type="button"
+                            className="ganancias-deseleccionar"
+                            onClick={() => setProductosSeleccionados([])}
+                            disabled={productosSeleccionados.length === 0}
+                        >
+                            Deseleccionar todos
+                        </button>
+                    </div>
                     <div className="ganancias-productos-lista">
                         {productosFiltrados.map(producto => (
                             <label key={producto.idProducto} className="ganancias-producto-opcion">
@@ -156,8 +193,9 @@ function Ganancias() {
                         </span>
                     )}
                 </div>
-                <button className="btn btn-primary" onClick={consultarGanancias}>
-                    Consultar
+                <button className="btn btn-primary" onClick={consultarGanancias} disabled={cargandoGanancias}>
+                    {cargandoGanancias && <span className="ganancias-spinner" aria-hidden="true" />}
+                    {cargandoGanancias ? 'Calculando...' : 'Consultar'}
                 </button>
             </div>
 
@@ -176,6 +214,20 @@ function Ganancias() {
                         <span className={`ganancia-card-valor ${resultado.ganancia >= 0 ? 'positivo' : 'negativo'}`}>
                             ${resultado.ganancia}
                         </span>
+                    </div>
+                    <div className="ganancias-por-producto">
+                        <h3>Ganancia por producto</h3>
+                        {resultado.productos.map(producto => (
+                            <div className="ganancia-producto-fila" key={producto.idProducto}>
+                                <div>
+                                    <strong>{producto.nombre}</strong>
+                                    <span>{producto.cantidad} unidad(es)</span>
+                                </div>
+                                <span className={`ganancia-producto-valor ${producto.ganancia >= 0 ? 'positivo' : 'negativo'}`}>
+                                    ${producto.ganancia}
+                                </span>
+                            </div>
+                        ))}
                     </div>
                 </div>
             )}

@@ -6,15 +6,26 @@
 
 .lista-header {
   display: flex;
-  align-items: center;
-  justify-content: space-between;
+  align-items: stretch;
+  flex-direction: column;
+  gap: 14px;
   margin-bottom: 32px;
+}
+
+.lista-header h2 {
+  margin-bottom: 0;
+  text-align: left;
+}
+
+.lista-header .btn {
+  width: 100%;
+  justify-content: center;
 }
 
 .lista-items {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 16px;
   margin-bottom: 24px;
 }
 
@@ -43,7 +54,7 @@
 .lista-item-info {
   display: flex;
   flex-direction: column;
-  gap: 2px;
+  gap: 6px;
 }
 
 .lista-item-titulo {
@@ -90,20 +101,21 @@
   }
 
   .lista-header {
-    align-items: stretch;
-    flex-direction: column;
-    gap: 14px;
+    width: 100%;
     margin-bottom: 22px;
   }
 
-  .lista-header .btn {
+  .lista-header h2 {
     width: 100%;
-    justify-content: center;
   }
 
   .lista-item {
     gap: 10px;
     padding: 13px 12px;
+  }
+
+  .lista-items {
+    gap: 10px;
   }
 
   .lista-item-info {
