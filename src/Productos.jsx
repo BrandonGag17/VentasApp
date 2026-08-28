@@ -11,6 +11,7 @@ function Productos() {
     const [pagina, setPagina] = useState(0)
     const [hayMasProductos, setHayMasProductos] = useState(true)
     const [cargando, setCargando] = useState(false)
+    const [exportando, setExportando] = useState(false)
 
     useEffect(() => {
         const temporizador = setTimeout(() => {
@@ -42,13 +43,42 @@ function Productos() {
     }
 
     async function exportExcel() {
-        if (!productos || productos.length === 0) {
+        setExportando(true)
+        const todosLosProductos = []
+        const productosPorPaginaExportacion = 1000
+        let paginaExportacion = 0
+        let hayMasProductosParaExportar = true
+
+        while (hayMasProductosParaExportar) {
+            const { data, error } = await supabase
+                .from('Productos')
+                .select('idProducto, Nombre, PrecioVenta, PrecioCompra')
+                .order('idProducto', { ascending: true })
+                .range(
+                    paginaExportacion * productosPorPaginaExportacion,
+                    (paginaExportacion + 1) * productosPorPaginaExportacion - 1
+                )
+
+            if (error) {
+                console.error(error)
+                alert('No se pudieron obtener todos los productos para exportar')
+                setExportando(false)
+                return
+            }
+
+            todosLosProductos.push(...data)
+            hayMasProductosParaExportar = data.length === productosPorPaginaExportacion
+            paginaExportacion += 1
+        }
+
+        if (todosLosProductos.length === 0) {
             alert('No hay productos para exportar')
+            setExportando(false)
             return
         }
 
         const XLSX = await import('xlsx')
-        const rows = productos.map(p => [
+        const rows = todosLosProductos.map(p => [
             p.Nombre,
             p.PrecioVenta ?? '',
             p.PrecioCompra ?? ''
@@ -60,6 +90,7 @@ function Productos() {
 
         const fileName = `productos_${new Date().toISOString().slice(0,10)}.xlsx`
         XLSX.writeFile(wb, fileName)
+        setExportando(false)
     }
 
     return (
@@ -80,8 +111,8 @@ function Productos() {
                 <button className="btn btn-secondary" onClick={() => navigate('/importar-productos')}>
                     Importar Excel
                 </button>
-                <button className="btn btn-secondary" onClick={exportExcel}>
-                    Exportar Excel
+                <button className="btn btn-secondary" onClick={exportExcel} disabled={exportando}>
+                    {exportando ? 'Exportando...' : 'Exportar Excel'}
                 </button>
             </div>
 
