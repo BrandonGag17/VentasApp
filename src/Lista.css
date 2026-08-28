@@ -29,6 +29,80 @@
   margin-bottom: 24px;
 }
 
+.filtro-ventas-clientes {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 24px;
+}
+
+.filtro-ventas-clientes > label {
+  font-size: 12px;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.filtro-ventas-acciones {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.filtro-ventas-acciones button {
+  padding: 8px 12px;
+  color: var(--text);
+  background: transparent;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  cursor: pointer;
+}
+
+.filtro-ventas-acciones button.activo {
+  color: var(--success);
+  border-color: var(--success);
+}
+
+.filtro-ventas-acciones button:disabled {
+  cursor: not-allowed;
+  opacity: 0.45;
+}
+
+.filtro-ventas-lista-clientes {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px 16px;
+  max-height: 180px;
+  padding: 10px;
+  overflow-y: auto;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+}
+
+.filtro-ventas-lista-clientes label {
+  display: flex;
+  align-items: center;
+  min-width: 0;
+  gap: 8px;
+  cursor: pointer;
+}
+
+.filtro-ventas-lista-clientes span {
+  overflow-wrap: anywhere;
+}
+
+.filtro-ventas-lista-clientes input {
+  width: auto;
+  flex: 0 0 auto;
+}
+
+.filtro-ventas-resumen,
+.lista-vacia {
+  color: var(--muted);
+  font-size: 13px;
+}
+
 .lista-item {
   display: flex;
   align-items: center;
@@ -116,6 +190,10 @@
 
   .lista-items {
     gap: 10px;
+  }
+
+  .filtro-ventas-lista-clientes {
+    grid-template-columns: 1fr;
   }
 
   .lista-item-info {

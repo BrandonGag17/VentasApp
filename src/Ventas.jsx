@@ -6,19 +6,67 @@ import './Lista.css'
 function Ventas() {
 
     const [ventas, setVentas] = useState([])
+    const [clientes, setClientes] = useState([])
+    const [busquedaCliente, setBusquedaCliente] = useState('')
+    const [clientesSeleccionados, setClientesSeleccionados] = useState([])
     const navigate = useNavigate()
 
     useEffect(() => {
         async function cargarVentas() {
             const { data, error } = await supabase
                 .from('Ventas')
-                .select('idVenta, fecha, total, estado, Clientes(Nombre, Apellido)')
+                .select('idVenta, idCliente, fecha, total, estado, Clientes(Nombre, Apellido)')
                 .order('fecha', { ascending: false })
 
             if (!error) setVentas(data)
+
+            const clientesCargados = []
+            const clientesPorPagina = 1000
+            let pagina = 0
+            let hayMasClientes = true
+
+            while (hayMasClientes) {
+                const { data: paginaClientes, error: errorClientes } = await supabase
+                    .from('Clientes')
+                    .select('idCliente, Nombre, Apellido')
+                    .order('idCliente', { ascending: true })
+                    .range(pagina * clientesPorPagina, (pagina + 1) * clientesPorPagina - 1)
+
+                if (errorClientes) {
+                    console.error(errorClientes)
+                    break
+                }
+
+                clientesCargados.push(...paginaClientes)
+                hayMasClientes = paginaClientes.length === clientesPorPagina
+                pagina += 1
+            }
+
+            clientesCargados.sort((clienteA, clienteB) =>
+                `${clienteA.Nombre ?? ''} ${clienteA.Apellido ?? ''}`.localeCompare(
+                    `${clienteB.Nombre ?? ''} ${clienteB.Apellido ?? ''}`,
+                    'es'
+                )
+            )
+            setClientes(clientesCargados)
         }
         cargarVentas()
     }, [])
+
+    const clientesFiltrados = clientes.filter(cliente =>
+        `${cliente.Nombre ?? ''} ${cliente.Apellido ?? ''}`.toLowerCase().includes(busquedaCliente.toLowerCase())
+    )
+    const ventasFiltradas = clientesSeleccionados.length === 0
+        ? ventas
+        : ventas.filter(venta => clientesSeleccionados.includes(venta.idCliente))
+
+    function alternarCliente(idCliente) {
+        setClientesSeleccionados(actuales =>
+            actuales.includes(idCliente)
+                ? actuales.filter(id => id !== idCliente)
+                : [...actuales, idCliente]
+        )
+    }
     async function eliminarVenta(idVenta) {
         const confirmar = window.confirm(
             "¿Estás seguro de que querés eliminar esta venta?"
@@ -50,8 +98,52 @@ function Ventas() {
                 </button>
             </div>
 
+            <div className="filtro-ventas-clientes">
+                <label htmlFor="buscar-cliente-ventas">Filtrar por cliente</label>
+                <input
+                    id="buscar-cliente-ventas"
+                    type="search"
+                    value={busquedaCliente}
+                    onChange={(e) => setBusquedaCliente(e.target.value)}
+                    placeholder="Buscar cliente..."
+                />
+                <div className="filtro-ventas-acciones">
+                    <button
+                        type="button"
+                        className={clientes.length > 0 && clientesSeleccionados.length === clientes.length ? 'activo' : ''}
+                        onClick={() => setClientesSeleccionados(clientes.map(cliente => cliente.idCliente))}
+                    >
+                        Todos los clientes
+                    </button>
+                    <button
+                        type="button"
+                        onClick={() => setClientesSeleccionados([])}
+                        disabled={clientesSeleccionados.length === 0}
+                    >
+                        Deseleccionar todos
+                    </button>
+                </div>
+                <div className="filtro-ventas-lista-clientes">
+                    {clientesFiltrados.map(cliente => (
+                        <label key={cliente.idCliente}>
+                            <input
+                                type="checkbox"
+                                checked={clientesSeleccionados.includes(cliente.idCliente)}
+                                onChange={() => alternarCliente(cliente.idCliente)}
+                            />
+                            <span>{cliente.Nombre} {cliente.Apellido}</span>
+                        </label>
+                    ))}
+                </div>
+                {clientesSeleccionados.length > 0 && (
+                    <span className="filtro-ventas-resumen">
+                        Mostrando ventas de {clientesSeleccionados.length} cliente(s)
+                    </span>
+                )}
+            </div>
+
             <div className="lista-items">
-                {ventas.map(venta => (
+                {ventasFiltradas.map(venta => (
                     <button className="lista-item" key={venta.idVenta} onClick={() => navigate(`/venta/${venta.idVenta}`)}>
                         <div className="lista-item-info">
                             <span className="lista-item-titulo">
@@ -88,6 +180,7 @@ function Ventas() {
                         </div>
                     </button>
                 ))}
+                {ventasFiltradas.length === 0 && <p className="lista-vacia">No hay ventas para los clientes seleccionados.</p>}
             </div>
 
         </div>
