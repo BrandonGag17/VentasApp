@@ -74,6 +74,26 @@
   color: var(--muted);
 }
 
+.detalle-venta-inputs {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.detalle-venta-inputs input {
+  width: 72px;
+}
+
+.btn-eliminar-producto {
+  margin-left: 10px;
+  padding: 6px 9px;
+  color: var(--danger);
+  background: transparent;
+  border: 1px solid var(--danger);
+  border-radius: var(--radius);
+  cursor: pointer;
+}
+
 .detalle-venta-producto-input {
   width: 80px !important;
   text-align: center;

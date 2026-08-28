@@ -15,11 +15,14 @@ function Ganancias() {
     const [productos, setProductos] = useState([])
     const [busquedaProducto, setBusquedaProducto] = useState('')
     const [productosSeleccionados, setProductosSeleccionados] = useState([])
+    const [clientes, setClientes] = useState([])
+    const [busquedaCliente, setBusquedaCliente] = useState('')
+    const [clientesSeleccionados, setClientesSeleccionados] = useState([])
     const [resultado, setResultado] = useState(null)
     const [cargandoGanancias, setCargandoGanancias] = useState(false)
 
     useEffect(() => {
-        async function cargarProductos() {
+        async function cargarFiltros() {
             const productosCargados = []
             let pagina = 0
             let hayMasProductos = true
@@ -45,13 +48,44 @@ function Ganancias() {
                 String(productoA.Nombre ?? '').localeCompare(String(productoB.Nombre ?? ''), 'es')
             )
             setProductos(productosCargados)
+
+            const clientesCargados = []
+            pagina = 0
+            hayMasProductos = true
+            while (hayMasProductos) {
+                const { data, error } = await supabase
+                    .from('Clientes')
+                    .select('idCliente, Nombre, Apellido')
+                    .order('idCliente', { ascending: true })
+                    .range(pagina * PRODUCTOS_POR_PAGINA, (pagina + 1) * PRODUCTOS_POR_PAGINA - 1)
+
+                if (error) {
+                    console.error(error)
+                    break
+                }
+
+                clientesCargados.push(...data)
+                hayMasProductos = data.length === PRODUCTOS_POR_PAGINA
+                pagina += 1
+            }
+
+            clientesCargados.sort((clienteA, clienteB) =>
+                `${clienteA.Nombre ?? ''} ${clienteA.Apellido ?? ''}`.localeCompare(
+                    `${clienteB.Nombre ?? ''} ${clienteB.Apellido ?? ''}`,
+                    'es'
+                )
+            )
+            setClientes(clientesCargados)
         }
 
-        cargarProductos()
+        cargarFiltros()
     }, [])
 
     const productosFiltrados = productos.filter(producto =>
         String(producto.Nombre ?? '').toLowerCase().includes(busquedaProducto.toLowerCase())
+    )
+    const clientesFiltrados = clientes.filter(cliente =>
+        `${cliente.Nombre ?? ''} ${cliente.Apellido ?? ''}`.toLowerCase().includes(busquedaCliente.toLowerCase())
     )
 
     function alternarProducto(idProducto) {
@@ -59,6 +93,14 @@ function Ganancias() {
             productosActuales.includes(idProducto)
                 ? productosActuales.filter(id => id !== idProducto)
                 : [...productosActuales, idProducto]
+        )
+    }
+
+    function alternarCliente(idCliente) {
+        setClientesSeleccionados(clientesActuales =>
+            clientesActuales.includes(idCliente)
+                ? clientesActuales.filter(id => id !== idCliente)
+                : [...clientesActuales, idCliente]
         )
     }
 
@@ -81,7 +123,7 @@ function Ganancias() {
                 CantidadUnidades,
                 PrecioVentaUnitario,
                 Productos(idProducto, Nombre, PrecioCompra),
-                Ventas!inner(fecha, estado)
+                Ventas!inner(fecha, estado, idCliente)
             `)
             .gte('Ventas.fecha', fechaLocalAISO(desdeFecha))
             .lt('Ventas.fecha', fechaLocalAISO(hastaFecha, 1))
@@ -89,6 +131,9 @@ function Ganancias() {
 
         if (productosSeleccionados.length > 0) {
             consulta = consulta.in('idProducto', productosSeleccionados)
+        }
+        if (clientesSeleccionados.length > 0) {
+            consulta = consulta.in('Ventas.idCliente', clientesSeleccionados)
         }
 
         const { data, error } = await consulta
@@ -192,6 +237,27 @@ function Ganancias() {
                             {productosSeleccionados.length} producto(s) seleccionado(s)
                         </span>
                     )}
+                </div>
+                <div className="ganancias-filtro-campo ganancias-filtro-producto">
+                    <label className="ganancias-filtro-label">Cliente</label>
+                    <input type="search" value={busquedaCliente} onChange={(e) => setBusquedaCliente(e.target.value)} placeholder="Buscar cliente..." />
+                    <div className="ganancias-acciones-productos">
+                        <button type="button" className={`ganancias-todos ${clientes.length > 0 && clientesSeleccionados.length === clientes.length ? 'activo' : ''}`} onClick={() => setClientesSeleccionados(clientes.map(cliente => cliente.idCliente))}>
+                            Todos los clientes
+                        </button>
+                        <button type="button" className="ganancias-deseleccionar" onClick={() => setClientesSeleccionados([])} disabled={clientesSeleccionados.length === 0}>
+                            Deseleccionar todos
+                        </button>
+                    </div>
+                    <div className="ganancias-productos-lista">
+                        {clientesFiltrados.map(cliente => (
+                            <label key={cliente.idCliente} className="ganancias-producto-opcion">
+                                <input type="checkbox" checked={clientesSeleccionados.includes(cliente.idCliente)} onChange={() => alternarCliente(cliente.idCliente)} />
+                                <span>{cliente.Nombre} {cliente.Apellido}</span>
+                            </label>
+                        ))}
+                    </div>
+                    {clientesSeleccionados.length > 0 && <span className="ganancias-productos-seleccionados">{clientesSeleccionados.length} cliente(s) seleccionado(s)</span>}
                 </div>
                 <button className="btn btn-primary" onClick={consultarGanancias} disabled={cargandoGanancias}>
                     {cargandoGanancias && <span className="ganancias-spinner" aria-hidden="true" />}
