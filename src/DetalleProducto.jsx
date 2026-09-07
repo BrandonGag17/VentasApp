@@ -10,6 +10,8 @@ function DetalleProducto() {
     const [producto, setProducto] = useState(null)
     const [editando, setEditando] = useState(false)
     const [form, setForm] = useState(null)
+    const [nuevoLote, setNuevoLote] = useState({ cantidad: '', precioCompra: '', precioVenta: '' })
+    const [agregandoStock, setAgregandoStock] = useState(false)
 
     useEffect(() => {
         async function traerProducto() {
@@ -85,6 +87,29 @@ function DetalleProducto() {
         navigate('/')
     }
 
+    async function agregarStock() {
+        const cantidad = Number(nuevoLote.cantidad)
+        const precioCompra = Number(nuevoLote.precioCompra)
+        const precioVenta = Number(nuevoLote.precioVenta)
+        if (!Number.isInteger(cantidad) || cantidad <= 0 || precioCompra < 0 || precioVenta < 0) {
+            return alert('Completá una cantidad entera y precios válidos')
+        }
+
+        setAgregandoStock(true)
+        const { error } = await supabase.rpc('agregar_lote_stock', {
+            p_id_producto: producto.idProducto,
+            p_cantidad: cantidad,
+            p_precio_compra: precioCompra,
+            p_precio_venta: precioVenta
+        })
+        setAgregandoStock(false)
+        if (error) return alert(error.message || 'No se pudo agregar el lote de stock')
+
+        setProducto(actual => ({ ...actual, Stock: Number(actual.Stock ?? 0) + cantidad, PrecioCompra: precioCompra, PrecioVenta: precioVenta }))
+        setNuevoLote({ cantidad: '', precioCompra: '', precioVenta: '' })
+        alert('Stock agregado')
+    }
+
     if (!producto) return <p>Cargando...</p>
 
     return (
@@ -123,11 +148,7 @@ function DetalleProducto() {
 
                 <div className="campo-fila">
                     <span className="campo-label">Stock</span>
-                    {editando ? (
-                        <input value={form.Stock} onChange={(e) => setForm({ ...form, Stock: e.target.value })} />
-                    ) : (
-                        <p className="campo-valor">{producto.Stock} unidades</p>
-                    )}
+                    <p className="campo-valor">{producto.Stock} unidades</p>
                 </div>
 
                 <div className="campo-fila">
@@ -151,6 +172,17 @@ function DetalleProducto() {
                 </div>
 
             </div>
+
+            <section className="agregar-stock">
+                <h3>Agregar stock (FIFO)</h3>
+                <p>Este lote se venderá después del stock que ya estaba cargado.</p>
+                <div className="agregar-stock-campos">
+                    <input type="number" min="1" placeholder="Cantidad" value={nuevoLote.cantidad} onChange={e => setNuevoLote({ ...nuevoLote, cantidad: e.target.value })} />
+                    <input type="number" min="0" step="0.01" placeholder="Precio de compra" value={nuevoLote.precioCompra} onChange={e => setNuevoLote({ ...nuevoLote, precioCompra: e.target.value })} />
+                    <input type="number" min="0" step="0.01" placeholder="Precio de venta" value={nuevoLote.precioVenta} onChange={e => setNuevoLote({ ...nuevoLote, precioVenta: e.target.value })} />
+                    <button className="btn btn-primary" type="button" onClick={agregarStock} disabled={agregandoStock}>{agregandoStock ? 'Agregando...' : 'Agregar lote'}</button>
+                </div>
+            </section>
 
             <div className="detalle-producto-acciones">
                 {editando ? (

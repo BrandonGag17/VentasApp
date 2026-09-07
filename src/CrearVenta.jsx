@@ -97,27 +97,16 @@ function CrearVenta() {
         if (!clienteSeleccionado) return alert("Seleccioná un cliente")
         if (renglones.length === 0) return alert("Agregá al menos un producto")
 
-        const { data: ventaCreada, error: errorVenta } = await supabase
-            .from('Ventas')
-            .insert([{
-                idCliente: clienteSeleccionado.idCliente,
-                fecha: new Date(),
-                estado: 'activa'
-            }])
-            .select()
-
-        if (errorVenta) return alert("Error al crear la venta")
-
-        const idVenta = ventaCreada[0].idVenta
-
-        const { error: errorDetalles } = await supabase.from('DetalleVentas').insert(renglones.map(renglon => ({
-                idVenta: idVenta,
+        const { error } = await supabase.rpc('registrar_venta_fifo', {
+            p_id_cliente: clienteSeleccionado.idCliente,
+            p_renglones: renglones.map(renglon => ({
                 idProducto: renglon.producto.idProducto,
-                CantidadUnidades: renglon.cantidad,
-                PrecioVentaUnitario: renglon.precioFinal // Se guarda el precio editado
-        })))
+                cantidad: renglon.cantidad,
+                precioVenta: renglon.precioFinal
+            }))
+        })
 
-        if (errorDetalles) return alert("Error al agregar los productos de la venta")
+        if (error) return alert(error.message || 'No se pudo crear la venta. Revisá el stock disponible.')
 
         alert("Venta creada ✅")
         navigate('/')

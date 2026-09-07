@@ -123,6 +123,7 @@ function Ganancias() {
                 CantidadUnidades,
                 PrecioVentaUnitario,
                 Productos(idProducto, Nombre, PrecioCompra),
+                ConsumosLote(Cantidad, CostoUnitario),
                 Ventas!inner(fecha, estado, idCliente)
             `)
             .gte('Ventas.fecha', fechaLocalAISO(desdeFecha))
@@ -151,7 +152,11 @@ function Ganancias() {
         data.forEach(detalle => {
             const cantidad = Number(detalle.CantidadUnidades)
             const ingreso = Number(detalle.PrecioVentaUnitario) * cantidad
-            const costo = Number(detalle.Productos?.PrecioCompra ?? 0) * cantidad
+            // Las ventas nuevas guardan qué lotes consumieron. Para ventas
+            // anteriores a FIFO se conserva el costo histórico disponible.
+            const costo = detalle.ConsumosLote?.length
+                ? detalle.ConsumosLote.reduce((total, consumo) => total + Number(consumo.Cantidad) * Number(consumo.CostoUnitario), 0)
+                : Number(detalle.Productos?.PrecioCompra ?? 0) * cantidad
             const idProducto = detalle.Productos?.idProducto ?? 'sin-producto'
 
             ingresos += ingreso

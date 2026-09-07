@@ -11,6 +11,7 @@ import Ganancias from './Ganancias'
 import DetalleVenta from './DetalleVenta'
 import ImportarProductos from './ImportarProductos'
 import DetalleCliente from './DetalleCliente'
+import ExportarProductos from './ExportarProductos'
 
 
 function App() {
@@ -29,6 +30,7 @@ function App() {
         <Route path="/ganancias" element={<Ganancias />} />
         <Route path="/venta/:id" element={<DetalleVenta />} />
         <Route path="/importar-productos" element={<ImportarProductos />} />
+        <Route path="/exportar-productos" element={<ExportarProductos />} />
       </Routes>
     </BrowserRouter>
   )

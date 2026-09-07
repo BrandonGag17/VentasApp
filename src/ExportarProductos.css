@@ -1,0 +1,8 @@
+.exportar-page { width: 100%; max-width: 1200px; margin: 0 auto; padding: 48px 24px; text-align: left; }
+.exportar-header { display: flex; justify-content: space-between; gap: 16px; align-items: flex-start; margin-bottom: 24px; }
+.exportar-header h2 { margin-bottom: 4px; }.exportar-header p { color: var(--muted); }
+.exportar-panel { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 18px; margin-bottom: 18px; }
+.exportar-panel h3 { margin-bottom: 12px; }.exportar-columnas { display: flex; flex-wrap: wrap; gap: 10px 18px; }.exportar-columnas label, .exportar-producto { cursor: pointer; }
+.exportar-filtros, .exportar-acciones { display: flex; gap: 10px; align-items: center; margin-bottom: 14px; }.exportar-filtros input { flex: 1; }.exportar-filtros select { max-width: 180px; }.exportar-acciones span { color: var(--muted); font-size: 13px; }
+.exportar-productos { max-height: 440px; overflow-y: auto; border-top: 1px solid var(--border); }.exportar-producto { display: grid; grid-template-columns: auto 1fr auto; gap: 10px; padding: 10px 4px; border-bottom: 1px solid var(--border); align-items: center; }.exportar-producto small { color: var(--accent-hover); }
+@media (max-width: 600px) { .exportar-page { padding: 28px 14px; }.exportar-header, .exportar-filtros, .exportar-acciones { flex-direction: column; align-items: stretch; }.exportar-filtros select { max-width: none; }.exportar-acciones .btn { justify-content: center; } }

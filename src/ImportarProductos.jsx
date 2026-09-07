@@ -63,17 +63,34 @@ function ImportarProductos() {
             PrecioVenta: Number(fila.PrecioVenta),
             NombreProveedor: fila.NombreProveedor,
             TipoProducto: fila.TipoProducto,
-            Stock: Number(fila.Stock)
+            // El stock se agrega por lote luego de crear el producto para que
+            // conserve su costo y precio de venta para el cálculo FIFO.
+            Stock: 0
         }))
 
-        const { error } = await supabase
+        const { data: productosCreados, error } = await supabase
             .from('Productos')
             .insert(productosParaInsertar)
+            .select('idProducto, PrecioCompra, PrecioVenta')
 
         if (error) {
             alert('Error al importar los productos')
             setCargando(false)
             return
+        }
+
+        for (let indice = 0; indice < productosCreados.length; indice += 1) {
+            const fila = preview[indice]
+            if (Number(fila.Stock) <= 0) continue
+            const { error: errorLote } = await supabase.rpc('agregar_lote_stock', {
+                p_id_producto: productosCreados[indice].idProducto,
+                p_cantidad: Number(fila.Stock),
+                p_precio_compra: Number(fila.PrecioCompra ?? 0),
+                p_precio_venta: Number(fila.PrecioVenta)
+            })
+            if (errorLote) {
+                alert(`Se importó el producto ${fila.Nombre}, pero no se pudo cargar su lote de stock: ${errorLote.message}`)
+            }
         }
 
         setCargando(false)

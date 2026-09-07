@@ -74,10 +74,7 @@ function Ventas() {
 
         if (!confirmar) return
 
-        const { error } = await supabase
-            .from('Ventas')
-            .delete()
-            .eq('idVenta', idVenta)
+        const { error } = await supabase.rpc('eliminar_venta_fifo', { p_id_venta: idVenta })
 
         if (error) {
             alert("Error al eliminar la venta")
