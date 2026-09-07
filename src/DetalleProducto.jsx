@@ -12,6 +12,8 @@ function DetalleProducto() {
     const [form, setForm] = useState(null)
     const [nuevoLote, setNuevoLote] = useState({ cantidad: '', precioCompra: '', precioVenta: '' })
     const [agregandoStock, setAgregandoStock] = useState(false)
+    const [lotes, setLotes] = useState([])
+    const [cargandoLotes, setCargandoLotes] = useState(true)
 
     useEffect(() => {
         async function traerProducto() {
@@ -27,6 +29,16 @@ function DetalleProducto() {
 
             setProducto(data[0])
             setForm(data[0])
+
+            const { data: lotesCargados, error: errorLotes } = await supabase
+                .from('LotesStock')
+                .select('idLote, CantidadInicial, CantidadDisponible, PrecioCompra, PrecioVenta, fechaIngreso')
+                .eq('idProducto', id)
+                .order('fechaIngreso', { ascending: true })
+                .order('idLote', { ascending: true })
+
+            if (!errorLotes) setLotes(lotesCargados)
+            setCargandoLotes(false)
         }
 
         traerProducto()
@@ -106,6 +118,14 @@ function DetalleProducto() {
         if (error) return alert(error.message || 'No se pudo agregar el lote de stock')
 
         setProducto(actual => ({ ...actual, Stock: Number(actual.Stock ?? 0) + cantidad, PrecioCompra: precioCompra, PrecioVenta: precioVenta }))
+        setLotes(actuales => [...actuales, {
+            idLote: `nuevo-${Date.now()}`,
+            CantidadInicial: cantidad,
+            CantidadDisponible: cantidad,
+            PrecioCompra: precioCompra,
+            PrecioVenta: precioVenta,
+            fechaIngreso: new Date().toISOString()
+        }])
         setNuevoLote({ cantidad: '', precioCompra: '', precioVenta: '' })
         alert('Stock agregado')
     }
@@ -150,6 +170,27 @@ function DetalleProducto() {
                     <span className="campo-label">Stock</span>
                     <p className="campo-valor">{producto.Stock} unidades</p>
                 </div>
+
+                <section className="lotes-stock">
+                    <div className="lotes-stock-titulo">
+                        <span className="campo-label">Lotes de stock (orden FIFO)</span>
+                        <span>{lotes.length} lote(s)</span>
+                    </div>
+                    {cargandoLotes ? <p className="lotes-stock-vacio">Cargando lotes...</p> : lotes.length === 0 ? (
+                        <p className="lotes-stock-vacio">Todavía no hay lotes registrados.</p>
+                    ) : (
+                        <div className="lotes-stock-lista">
+                            {lotes.map((lote, indice) => (
+                                <div className="lote-stock" key={lote.idLote}>
+                                    <span className="lote-orden">#{indice + 1}</span>
+                                    <span><strong>{lote.CantidadDisponible}</strong> de {lote.CantidadInicial} u.</span>
+                                    <span>Compra <strong>${Number(lote.PrecioCompra).toLocaleString('es-AR')}</strong></span>
+                                    <span>Venta <strong>${Number(lote.PrecioVenta).toLocaleString('es-AR')}</strong></span>
+                                </div>
+                            ))}
+                        </div>
+                    )}
+                </section>
 
                 <div className="campo-fila">
                     <span className="campo-label">Proveedor</span>

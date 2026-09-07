@@ -12,12 +12,14 @@ import DetalleVenta from './DetalleVenta'
 import ImportarProductos from './ImportarProductos'
 import DetalleCliente from './DetalleCliente'
 import ExportarProductos from './ExportarProductos'
+import LoadingIndicator from './LoadingIndicator'
 
 
 function App() {
   return (
     <BrowserRouter>
       <Header />
+      <LoadingIndicator />
       <Routes>
         <Route path="/" element={<Productos />} />
         <Route path="/producto/:id" element={<DetalleProducto />} />

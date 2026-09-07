@@ -94,3 +94,6 @@ $$;
 grant execute on function public.agregar_lote_stock(bigint, integer, numeric, numeric) to anon, authenticated;
 grant execute on function public.registrar_venta_fifo(bigint, jsonb) to anon, authenticated;
 grant execute on function public.eliminar_venta_fifo(bigint) to anon, authenticated;
+
+-- Hace que PostgREST/Supabase detecte las funciones nuevas de inmediato.
+notify pgrst, 'reload schema';

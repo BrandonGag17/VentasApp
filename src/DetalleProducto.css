@@ -47,8 +47,29 @@
 
 .detalle-producto-acciones {
   display: flex;
-  gap: 10px;
+  gap: 16px;
+  margin-top: 36px;
+  padding-top: 24px;
+  border-top: 1px solid var(--border);
 }
+
+.lotes-stock {
+  border-bottom: 1px solid var(--border);
+  padding-bottom: 12px;
+}
+
+.lotes-stock-titulo {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.lotes-stock-vacio { color: var(--muted); font-size: 13px; padding: 10px 0 0; }
+.lotes-stock-lista { display: flex; flex-direction: column; gap: 8px; margin-top: 10px; }
+.lote-stock { display: grid; grid-template-columns: 34px 1fr 1fr 1fr; gap: 8px; align-items: center; padding: 10px; border: 1px solid var(--border); border-radius: 7px; font-size: 13px; }
+.lote-orden { color: var(--accent-hover); font-family: var(--mono); }
 
 .agregar-stock {
   border-top: 1px solid var(--border);
@@ -63,4 +84,8 @@
 
 @media (max-width: 600px) {
   .agregar-stock-campos { grid-template-columns: 1fr; }
+  .detalle-producto-acciones { flex-direction: column; }
+  .detalle-producto-acciones .btn { justify-content: center; }
+  .lote-stock { grid-template-columns: 30px 1fr; }
+  .lote-stock span:nth-child(n + 3) { grid-column: 2; }
 }
