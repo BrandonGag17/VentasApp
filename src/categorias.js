@@ -25,11 +25,28 @@ function normalizar(nombre) {
 
 // El orden de CATEGORIAS define la prioridad: las plataformas se evalúan
 // antes que las marcas, por ejemplo "Lego Batman PS4" queda en PS4.
-export function obtenerCategoria(nombre) {
+export function obtenerCategoria(nombre, tipoProducto = '') {
     const nombreNormalizado = normalizar(nombre)
     const categoria = CATEGORIAS.find(({ patrones }) =>
         patrones.some(patron => patron.test(nombreNormalizado))
     )
 
-    return categoria?.nombre ?? 'Sin categoría'
+    // Tipo permite crear una categoría nueva sin modificar código. Las reglas
+    // conocidas se evalúan antes: "Lego Batman PS4" sigue siendo PS4.
+    if (categoria) return categoria.nombre
+
+    const tipo = String(tipoProducto).trim()
+    const tipoConocido = CATEGORIAS.find(item => normalizar(item.nombre) === normalizar(tipo))
+    return tipoConocido?.nombre ?? (tipo || 'Sin categoría')
+}
+
+export function obtenerCategorias(productos = []) {
+    const conocidas = new Map(CATEGORIAS.map(categoria => [normalizar(categoria.nombre), categoria.nombre]))
+
+    productos.forEach(producto => {
+        const tipo = String(producto.TipoProducto ?? '').trim()
+        if (tipo && !conocidas.has(normalizar(tipo))) conocidas.set(normalizar(tipo), tipo)
+    })
+
+    return Array.from(conocidas.values())
 }

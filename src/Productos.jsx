@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { supabase } from './supabaseClient'
-import { CATEGORIAS, obtenerCategoria } from './categorias'
+import { CATEGORIAS, obtenerCategoria, obtenerCategorias } from './categorias'
 import './Productos.css'
 
 function Productos() {
@@ -13,6 +13,7 @@ function Productos() {
     const [hayMasProductos, setHayMasProductos] = useState(true)
     const [cargando, setCargando] = useState(false)
     const [categoriaActiva, setCategoriaActiva] = useState('Todas')
+    const [categorias, setCategorias] = useState(CATEGORIAS.map(categoria => categoria.nombre))
     const productosDeCategoria = useRef([])
     const solicitudActual = useRef(0)
 
@@ -25,6 +26,27 @@ function Productos() {
         // cargarProductos se declara en el componente porque usa el estado actual.
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [busqueda, categoriaActiva])
+
+    useEffect(() => {
+        async function cargarCategorias() {
+            const todos = []
+            const TAMANO_LOTE = 1000
+            let paginaConsulta = 0
+            let quedanProductos = true
+            while (quedanProductos) {
+                const { data, error } = await supabase
+                    .from('Productos')
+                    .select('Nombre, TipoProducto')
+                    .range(paginaConsulta * TAMANO_LOTE, (paginaConsulta + 1) * TAMANO_LOTE - 1)
+                if (error) return
+                todos.push(...data)
+                quedanProductos = data.length === TAMANO_LOTE
+                paginaConsulta += 1
+            }
+            setCategorias(obtenerCategorias(todos))
+        }
+        cargarCategorias()
+    }, [])
 
     async function cargarProductos(numeroPagina, agregar, termino, categoria = categoriaActiva) {
         if (agregar && categoria !== 'Todas') {
@@ -48,7 +70,7 @@ function Productos() {
             while (quedanProductos) {
                 const { data, error } = await supabase
                     .from('Productos')
-                    .select('idProducto, Nombre, PrecioVenta, PrecioCompra, Stock, ImagenUrl')
+                    .select('idProducto, Nombre, PrecioVenta, PrecioCompra, Stock, ImagenUrl, TipoProducto')
                     .ilike('Nombre', `%${termino}%`)
                     .order('idProducto', { ascending: true })
                     .range(paginaConsulta * TAMANO_LOTE, (paginaConsulta + 1) * TAMANO_LOTE - 1)
@@ -58,7 +80,7 @@ function Productos() {
                     return
                 }
 
-                productosCoincidentes.push(...data.filter(producto => obtenerCategoria(producto.Nombre) === categoria))
+                productosCoincidentes.push(...data.filter(producto => obtenerCategoria(producto.Nombre, producto.TipoProducto) === categoria))
                 quedanProductos = data.length === TAMANO_LOTE
                 paginaConsulta += 1
             }
@@ -73,7 +95,7 @@ function Productos() {
 
         const { data, error } = await supabase
             .from('Productos')
-            .select('idProducto, Nombre, PrecioVenta, PrecioCompra, Stock, ImagenUrl')
+            .select('idProducto, Nombre, PrecioVenta, PrecioCompra, Stock, ImagenUrl, TipoProducto')
             .ilike('Nombre', `%${termino}%`)
             .order('idProducto', { ascending: true })
             .range(numeroPagina * PRODUCTOS_POR_PAGINA, (numeroPagina + 1) * PRODUCTOS_POR_PAGINA - 1)
@@ -105,13 +127,13 @@ function Productos() {
 
             <div className="categorias" aria-label="Filtrar productos por categoría">
                 <button className={`categoria-filtro ${categoriaActiva === 'Todas' ? 'categoria-filtro-activa' : ''}`} onClick={() => setCategoriaActiva('Todas')}>Todas</button>
-                {CATEGORIAS.map(categoria => (
+                {categorias.map(categoria => (
                     <button
-                        className={`categoria-filtro ${categoriaActiva === categoria.nombre ? 'categoria-filtro-activa' : ''}`}
-                        key={categoria.nombre}
-                        onClick={() => setCategoriaActiva(categoria.nombre)}
+                        className={`categoria-filtro ${categoriaActiva === categoria ? 'categoria-filtro-activa' : ''}`}
+                        key={categoria}
+                        onClick={() => setCategoriaActiva(categoria)}
                     >
-                        {categoria.nombre}
+                        {categoria}
                     </button>
                 ))}
             </div>
@@ -121,7 +143,7 @@ function Productos() {
                     <button className="producto-item" key={prod.idProducto} onClick={() => navigate(`/producto/${prod.idProducto}`)}>
                         {prod.ImagenUrl && <img src={prod.ImagenUrl} alt={prod.Nombre} />}
                         <span>{prod.Nombre}</span>
-                        <span className="producto-categoria">{obtenerCategoria(prod.Nombre)}</span>
+                        <span className="producto-categoria">{obtenerCategoria(prod.Nombre, prod.TipoProducto)}</span>
                     </button>
                 ))}
             </div>

@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { supabase } from './supabaseClient'
-import { CATEGORIAS, obtenerCategoria } from './categorias'
+import { obtenerCategoria, obtenerCategorias } from './categorias'
 import './ExportarProductos.css'
 
 const COLUMNAS = [
@@ -54,13 +54,13 @@ function ExportarProductos() {
     const productosFiltrados = useMemo(() => {
         const termino = busqueda.trim().toLocaleLowerCase('es')
         return productos.filter(producto =>
-            (categoria === 'Todas' || obtenerCategoria(producto.Nombre) === categoria) &&
+            (categoria === 'Todas' || obtenerCategoria(producto.Nombre, producto.TipoProducto) === categoria) &&
             (!termino || String(producto.Nombre ?? '').toLocaleLowerCase('es').includes(termino))
         )
     }, [productos, busqueda, categoria])
 
     const idsCategoria = productos
-        .filter(producto => categoria === 'Todas' || obtenerCategoria(producto.Nombre) === categoria)
+        .filter(producto => categoria === 'Todas' || obtenerCategoria(producto.Nombre, producto.TipoProducto) === categoria)
         .map(producto => producto.idProducto)
 
     function alternarProducto(idProducto) {
@@ -108,10 +108,10 @@ function ExportarProductos() {
             </section>
 
             <section className="exportar-panel">
-                <div className="exportar-filtros"><input type="search" placeholder="Buscar producto..." value={busqueda} onChange={e => setBusqueda(e.target.value)} /><select value={categoria} onChange={e => setCategoria(e.target.value)}><option>Todas</option>{CATEGORIAS.map(item => <option key={item.nombre}>{item.nombre}</option>)}</select></div>
+                <div className="exportar-filtros"><input type="search" placeholder="Buscar producto..." value={busqueda} onChange={e => setBusqueda(e.target.value)} /><select value={categoria} onChange={e => setCategoria(e.target.value)}><option>Todas</option>{obtenerCategorias(productos).map(item => <option key={item}>{item}</option>)}</select></div>
                 <div className="exportar-acciones"><button type="button" className="btn btn-secondary" onClick={() => setSeleccionados(actuales => [...new Set([...actuales, ...idsCategoria])])}>Seleccionar toda la categoría</button><button type="button" className="btn btn-secondary" onClick={() => setSeleccionados(actuales => actuales.filter(id => !idsCategoria.includes(id)))}>Deseleccionar categoría</button><span>{seleccionados.length} producto(s) seleccionado(s)</span></div>
                 <div className="exportar-productos">
-                    {cargando ? <p>Cargando productos...</p> : productosFiltrados.map(producto => <label className="exportar-producto" key={producto.idProducto}><input type="checkbox" checked={seleccionados.includes(producto.idProducto)} onChange={() => alternarProducto(producto.idProducto)} /><span>{producto.Nombre}</span><small>{obtenerCategoria(producto.Nombre)}</small></label>)}
+                    {cargando ? <p>Cargando productos...</p> : productosFiltrados.map(producto => <label className="exportar-producto" key={producto.idProducto}><input type="checkbox" checked={seleccionados.includes(producto.idProducto)} onChange={() => alternarProducto(producto.idProducto)} /><span>{producto.Nombre}</span><small>{obtenerCategoria(producto.Nombre, producto.TipoProducto)}</small></label>)}
                 </div>
             </section>
             <button className="btn btn-primary" onClick={exportar} disabled={exportando}>{exportando ? 'Exportando...' : 'Descargar Excel'}</button>
