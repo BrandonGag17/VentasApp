@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { supabase } from './supabaseClient'
-import { CATEGORIAS, obtenerCategoria, obtenerCategorias } from './categorias'
+import { CATEGORIAS, SIN_CATEGORIA, obtenerCategoria, obtenerCategorias } from './categorias'
 import './Productos.css'
 
 function Productos() {
@@ -13,7 +13,7 @@ function Productos() {
     const [hayMasProductos, setHayMasProductos] = useState(true)
     const [cargando, setCargando] = useState(false)
     const [categoriaActiva, setCategoriaActiva] = useState('Todas')
-    const [categorias, setCategorias] = useState(CATEGORIAS.map(categoria => categoria.nombre))
+    const [categorias, setCategorias] = useState([...CATEGORIAS.map(categoria => categoria.nombre), SIN_CATEGORIA])
     const productosDeCategoria = useRef([])
     const solicitudActual = useRef(0)
 

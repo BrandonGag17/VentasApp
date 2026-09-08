@@ -16,6 +16,8 @@ export const CATEGORIAS = [
     { nombre: 'Lego', patrones: [/\blego\b/i] }
 ]
 
+export const SIN_CATEGORIA = 'Sin categoría'
+
 function normalizar(nombre) {
     return String(nombre ?? '')
         .normalize('NFD')
@@ -37,7 +39,7 @@ export function obtenerCategoria(nombre, tipoProducto = '') {
 
     const tipo = String(tipoProducto).trim()
     const tipoConocido = CATEGORIAS.find(item => normalizar(item.nombre) === normalizar(tipo))
-    return tipoConocido?.nombre ?? (tipo || 'Sin categoría')
+    return tipoConocido?.nombre ?? (tipo || SIN_CATEGORIA)
 }
 
 export function obtenerCategorias(productos = []) {
@@ -48,5 +50,6 @@ export function obtenerCategorias(productos = []) {
         if (tipo && !conocidas.has(normalizar(tipo))) conocidas.set(normalizar(tipo), tipo)
     })
 
-    return Array.from(conocidas.values())
+    // Siempre existe para que los productos sin coincidencias puedan filtrarse.
+    return [...Array.from(conocidas.values()), SIN_CATEGORIA]
 }

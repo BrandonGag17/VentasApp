@@ -7,6 +7,7 @@ import './ExportarProductos.css'
 const COLUMNAS = [
     { clave: 'idProducto', etiqueta: 'ID' },
     { clave: 'Nombre', etiqueta: 'Nombre' },
+    { clave: 'Categoria', etiqueta: 'Categoría' },
     { clave: 'PrecioCompra', etiqueta: 'Precio de compra' },
     { clave: 'PrecioVenta', etiqueta: 'Precio de venta' },
     { clave: 'Stock', etiqueta: 'Stock' },
@@ -38,7 +39,7 @@ function ExportarProductos() {
     const navigate = useNavigate()
     const [productos, setProductos] = useState([])
     const [seleccionados, setSeleccionados] = useState([])
-    const [columnas, setColumnas] = useState(['Nombre', 'PrecioCompra', 'PrecioVenta', 'Stock'])
+    const [columnas, setColumnas] = useState(['Nombre', 'Categoria', 'PrecioCompra', 'PrecioVenta', 'Stock'])
     const [busqueda, setBusqueda] = useState('')
     const [categoria, setCategoria] = useState('Todas')
     const [cargando, setCargando] = useState(true)
@@ -80,11 +81,22 @@ function ExportarProductos() {
         if (columnas.length === 0) return alert('Elegí al menos un atributo para exportar')
 
         setExportando(true)
-        const seleccion = productos.filter(producto => seleccionados.includes(producto.idProducto))
+        const seleccion = productos
+            .filter(producto => seleccionados.includes(producto.idProducto))
+            .sort((productoA, productoB) => {
+                const categoriaA = obtenerCategoria(productoA.Nombre, productoA.TipoProducto)
+                const categoriaB = obtenerCategoria(productoB.Nombre, productoB.TipoProducto)
+                return categoriaA.localeCompare(categoriaB, 'es') || String(productoA.Nombre ?? '').localeCompare(String(productoB.Nombre ?? ''), 'es')
+            })
         const columnasElegidas = COLUMNAS.filter(columna => columnas.includes(columna.clave))
         const XLSX = await import('xlsx')
         const filas = seleccion.map(producto => Object.fromEntries(
-            columnasElegidas.map(columna => [columna.etiqueta, producto[columna.clave] ?? ''])
+            columnasElegidas.map(columna => [
+                columna.etiqueta,
+                columna.clave === 'Categoria'
+                    ? obtenerCategoria(producto.Nombre, producto.TipoProducto)
+                    : producto[columna.clave] ?? ''
+            ])
         ))
         const hoja = XLSX.utils.json_to_sheet(filas, { header: columnasElegidas.map(columna => columna.etiqueta) })
         const libro = XLSX.utils.book_new()
