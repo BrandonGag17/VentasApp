@@ -17,9 +17,17 @@ function Productos() {
     const productosDeCategoria = useRef([])
     const solicitudActual = useRef(0)
 
+    function normalizarNombreParaOrden(nombre) {
+        return String(nombre ?? '')
+            .normalize('NFD')
+            .replace(/[\u0300-\u036f]/g, '')
+            .replace(/[\u200B-\u200D\uFEFF]/g, '')
+            .trim()
+    }
+
     function ordenarPorNombre(productos) {
         return [...productos].sort((productoA, productoB) =>
-            String(productoA.Nombre ?? '').localeCompare(String(productoB.Nombre ?? ''), 'es', {
+            normalizarNombreParaOrden(productoA.Nombre).localeCompare(normalizarNombreParaOrden(productoB.Nombre), 'es', {
                 sensitivity: 'base'
             })
         )
@@ -112,7 +120,11 @@ function Productos() {
             .range(numeroPagina * PRODUCTOS_POR_PAGINA, (numeroPagina + 1) * PRODUCTOS_POR_PAGINA - 1)
 
         if (!error && idSolicitud === solicitudActual.current) {
-            setProductos(productosActuales => agregar ? [...productosActuales, ...data] : data)
+            const productosOrdenados = ordenarPorNombre(data)
+            setProductos(productosActuales => agregar
+                ? ordenarPorNombre([...productosActuales, ...productosOrdenados])
+                : productosOrdenados
+            )
             setPagina(numeroPagina)
             setHayMasProductos(data.length === PRODUCTOS_POR_PAGINA)
         }
