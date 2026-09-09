@@ -14,7 +14,9 @@ function Productos() {
     const [cargando, setCargando] = useState(false)
     const [categoriaActiva, setCategoriaActiva] = useState('Todas')
     const [categorias, setCategorias] = useState([...CATEGORIAS.map(categoria => categoria.nombre), SIN_CATEGORIA])
-    const productosDeCategoria = useRef([])
+    // Conserva el resultado completo ya ordenado. Así cada página es sólo una
+    // porción de la misma lista, en vez de ordenar páginas independientes.
+    const productosFiltrados = useRef([])
     const solicitudActual = useRef(0)
 
     function normalizarNombreParaOrden(nombre) {
@@ -65,69 +67,51 @@ function Productos() {
     }, [])
 
     async function cargarProductos(numeroPagina, agregar, termino, categoria = categoriaActiva) {
-        if (agregar && categoria !== 'Todas') {
+        if (agregar) {
             const inicio = numeroPagina * PRODUCTOS_POR_PAGINA
-            const siguientePagina = productosDeCategoria.current.slice(inicio, inicio + PRODUCTOS_POR_PAGINA)
+            const siguientePagina = productosFiltrados.current.slice(inicio, inicio + PRODUCTOS_POR_PAGINA)
             setProductos(productosActuales => [...productosActuales, ...siguientePagina])
             setPagina(numeroPagina)
-            setHayMasProductos(productosDeCategoria.current.length > inicio + PRODUCTOS_POR_PAGINA)
+            setHayMasProductos(productosFiltrados.current.length > inicio + PRODUCTOS_POR_PAGINA)
             return
         }
 
         setCargando(true)
         const idSolicitud = ++solicitudActual.current
 
-        if (categoria !== 'Todas') {
-            const productosCoincidentes = []
-            const TAMANO_LOTE = 1000
-            let paginaConsulta = 0
-            let quedanProductos = true
+        const todosLosProductos = []
+        const TAMANO_LOTE = 1000
+        let paginaConsulta = 0
+        let quedanProductos = true
 
-            while (quedanProductos) {
-                const { data, error } = await supabase
-                    .from('Productos')
-                    .select('idProducto, Nombre, PrecioVenta, PrecioCompra, Stock, ImagenUrl, TipoProducto')
-                    .ilike('Nombre', `%${termino}%`)
-                    .order('Nombre', { ascending: true })
-                    .order('idProducto', { ascending: true })
-                    .range(paginaConsulta * TAMANO_LOTE, (paginaConsulta + 1) * TAMANO_LOTE - 1)
+        while (quedanProductos) {
+            const { data, error } = await supabase
+                .from('Productos')
+                .select('idProducto, Nombre, PrecioVenta, PrecioCompra, Stock, ImagenUrl, TipoProducto')
+                .ilike('Nombre', `%${termino}%`)
+                .order('Nombre', { ascending: true })
+                .order('idProducto', { ascending: true })
+                .range(paginaConsulta * TAMANO_LOTE, (paginaConsulta + 1) * TAMANO_LOTE - 1)
 
-                if (error || idSolicitud !== solicitudActual.current) {
-                    if (idSolicitud === solicitudActual.current) setCargando(false)
-                    return
-                }
-
-                productosCoincidentes.push(...data.filter(producto => obtenerCategoria(producto.Nombre, producto.TipoProducto) === categoria))
-                quedanProductos = data.length === TAMANO_LOTE
-                paginaConsulta += 1
+            if (error || idSolicitud !== solicitudActual.current) {
+                if (idSolicitud === solicitudActual.current) setCargando(false)
+                return
             }
 
-            const productosOrdenados = ordenarPorNombre(productosCoincidentes)
-            productosDeCategoria.current = productosOrdenados
-            setProductos(productosOrdenados.slice(0, PRODUCTOS_POR_PAGINA))
-            setPagina(0)
-            setHayMasProductos(productosOrdenados.length > PRODUCTOS_POR_PAGINA)
-            setCargando(false)
-            return
+            todosLosProductos.push(...data)
+            quedanProductos = data.length === TAMANO_LOTE
+            paginaConsulta += 1
         }
 
-        const { data, error } = await supabase
-            .from('Productos')
-            .select('idProducto, Nombre, PrecioVenta, PrecioCompra, Stock, ImagenUrl, TipoProducto')
-            .ilike('Nombre', `%${termino}%`)
-            .order('Nombre', { ascending: true })
-            .order('idProducto', { ascending: true })
-            .range(numeroPagina * PRODUCTOS_POR_PAGINA, (numeroPagina + 1) * PRODUCTOS_POR_PAGINA - 1)
+        const productosDeCategoria = categoria === 'Todas'
+            ? todosLosProductos
+            : todosLosProductos.filter(producto => obtenerCategoria(producto.Nombre, producto.TipoProducto) === categoria)
+        const productosOrdenados = ordenarPorNombre(productosDeCategoria)
 
-        if (!error && idSolicitud === solicitudActual.current) {
-            const productosOrdenados = ordenarPorNombre(data)
-            setProductos(productosActuales => agregar
-                ? ordenarPorNombre([...productosActuales, ...productosOrdenados])
-                : productosOrdenados
-            )
-            setPagina(numeroPagina)
-            setHayMasProductos(data.length === PRODUCTOS_POR_PAGINA)
-        }
+        productosFiltrados.current = productosOrdenados
+        setProductos(productosOrdenados.slice(0, PRODUCTOS_POR_PAGINA))
+        setPagina(0)
+        setHayMasProductos(productosOrdenados.length > PRODUCTOS_POR_PAGINA)
         setCargando(false)
     }
 

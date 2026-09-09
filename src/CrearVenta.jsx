@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { supabase } from './supabaseClient'
 import './CrearVenta.css'
@@ -17,6 +17,15 @@ function CrearVenta() {
     const [precioPersonalizado, setPrecioPersonalizado] = useState('') // El precio editable
     const [cantidad, setCantidad] = useState('')
     const [renglones, setRenglones] = useState([])
+    const buscadorRef = useRef(null)
+
+    function normalizarNombreParaOrden(nombre) {
+        return String(nombre ?? '')
+            .normalize('NFD')
+            .replace(/[\u0300-\u036f]/g, '')
+            .replace(/[\u200B-\u200D\uFEFF]/g, '')
+            .trim()
+    }
 
     useEffect(() => {
         async function cargarDatos() {
@@ -46,7 +55,11 @@ function CrearVenta() {
                 .from('Clientes')
                 .select('idCliente, Nombre, Apellido')
 
-            setProductos(productosCargados)
+            setProductos(productosCargados.sort((productoA, productoB) =>
+                normalizarNombreParaOrden(productoA.Nombre).localeCompare(normalizarNombreParaOrden(productoB.Nombre), 'es', {
+                    sensitivity: 'base'
+                })
+            ))
             if (dataClientes) setClientes(dataClientes)
         }
         cargarDatos()
@@ -73,12 +86,14 @@ function CrearVenta() {
         )
 
         if (indexExistente !== -1) {
-            const nuevos = [...renglones]
-            nuevos[indexExistente].cantidad += Number(cantidad)
-            setRenglones(nuevos)
+            setRenglones(renglonesActuales => renglonesActuales.map((renglon, indice) =>
+                indice === indexExistente
+                    ? { ...renglon, cantidad: renglon.cantidad + Number(cantidad) }
+                    : renglon
+            ))
         } else {
-            setRenglones([
-                ...renglones,
+            setRenglones(renglonesActuales => [
+                ...renglonesActuales,
                 {
                     producto: productoSeleccionado,
                     cantidad: Number(cantidad),
@@ -92,6 +107,7 @@ function CrearVenta() {
         setPrecioPersonalizado('')
         setCantidad('')
         setBusqueda('')
+        requestAnimationFrame(() => buscadorRef.current?.focus())
     }
 
     async function agregarVenta() {
@@ -133,6 +149,7 @@ function CrearVenta() {
                 <div className="crear-venta-campo" style={{ position: 'relative' }}>
                     <label>Buscar Producto</label>
                     <input
+                        ref={buscadorRef}
                         type="text"
                         value={busqueda}
                         onChange={(e) => { setBusqueda(e.target.value); setProductoSeleccionado(null); }}
