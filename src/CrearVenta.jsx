@@ -17,6 +17,7 @@ function CrearVenta() {
     const [precioPersonalizado, setPrecioPersonalizado] = useState('') // El precio editable
     const [cantidad, setCantidad] = useState('')
     const [renglones, setRenglones] = useState([])
+    const [indiceEnEdicion, setIndiceEnEdicion] = useState(null)
     const buscadorRef = useRef(null)
 
     function normalizarNombreParaOrden(nombre) {
@@ -71,6 +72,7 @@ function CrearVenta() {
     )
 
     function seleccionarProducto(prod) {
+        setIndiceEnEdicion(null)
         setProductoSeleccionado(prod)
         setPrecioPersonalizado(prod.PrecioVenta) // Carga el precio base, pero permite editarlo
         setBusqueda(prod.Nombre) // Setea el nombre en el input
@@ -108,6 +110,41 @@ function CrearVenta() {
         setCantidad('')
         setBusqueda('')
         requestAnimationFrame(() => buscadorRef.current?.focus())
+    }
+
+    function editarRenglon(indice) {
+        const renglon = renglones[indice]
+        setIndiceEnEdicion(indice)
+        setProductoSeleccionado(renglon.producto)
+        setPrecioPersonalizado(renglon.precioFinal)
+        setCantidad(renglon.cantidad)
+        setBusqueda(renglon.producto.Nombre)
+    }
+
+    function guardarCambiosRenglon() {
+        if (indiceEnEdicion === null || !productoSeleccionado) return
+        if (!cantidad || Number(cantidad) <= 0) return alert('Cantidad inválida')
+        if (precioPersonalizado === '' || Number(precioPersonalizado) < 0) return alert('Precio de venta inválido')
+
+        setRenglones(renglonesActuales => renglonesActuales.map((renglon, indice) =>
+            indice === indiceEnEdicion
+                ? { ...renglon, cantidad: Number(cantidad), precioFinal: Number(precioPersonalizado) }
+                : renglon
+        ))
+        setIndiceEnEdicion(null)
+        setProductoSeleccionado(null)
+        setPrecioPersonalizado('')
+        setCantidad('')
+        setBusqueda('')
+        requestAnimationFrame(() => buscadorRef.current?.focus())
+    }
+
+    function cancelarEdicionRenglon() {
+        setIndiceEnEdicion(null)
+        setProductoSeleccionado(null)
+        setPrecioPersonalizado('')
+        setCantidad('')
+        setBusqueda('')
     }
 
     async function agregarVenta() {
@@ -185,7 +222,14 @@ function CrearVenta() {
                                 onChange={(e) => setCantidad(e.target.value)}
                             />
                         </div>
-                        <button type="button" onClick={agregarRenglon}>Agregar producto</button>
+                        <div className="detalle-edicion-acciones">
+                            <button type="button" onClick={indiceEnEdicion === null ? agregarRenglon : guardarCambiosRenglon}>
+                                {indiceEnEdicion === null ? 'Agregar producto' : 'Guardar cambios'}
+                            </button>
+                            {indiceEnEdicion !== null && (
+                                <button type="button" className="btn btn-secondary" onClick={cancelarEdicionRenglon}>Cancelar</button>
+                            )}
+                        </div>
                     </div>
                 )}
 
@@ -199,6 +243,7 @@ function CrearVenta() {
                                 <span>Cant: {r.cantidad}</span>
                                 <span>Precio: ${r.precioFinal}</span>
                                 <span>Subtotal: ${r.cantidad * r.precioFinal}</span>
+                                <button type="button" className="btn-editar-renglon" onClick={() => editarRenglon(index)}>Editar</button>
                                 <button type="button" onClick={() => setRenglones(renglones.filter((_, i) => i !== index))}>❌</button>
                             </div>
                         ))}

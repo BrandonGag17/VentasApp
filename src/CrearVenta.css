@@ -85,6 +85,11 @@
   gap: 14px;
 }
 
+.detalle-edicion-acciones {
+  display: flex;
+  gap: 10px;
+}
+
 .tabla-productos {
   display: flex;
   flex-direction: column;
@@ -93,7 +98,7 @@
 
 .renglon-item {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) auto auto auto auto;
+  grid-template-columns: minmax(0, 1fr) auto auto auto auto auto;
   align-items: center;
   gap: 10px;
   padding: 12px;
@@ -137,5 +142,15 @@
 
   .renglon-item button {
     grid-column: 2;
+  }
+
+  .renglon-item .btn-editar-renglon {
+    grid-column: 1;
+    grid-row: 3;
+    justify-self: start;
+  }
+
+  .detalle-edicion-acciones {
+    flex-direction: column;
   }
 }
