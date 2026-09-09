@@ -5,7 +5,7 @@ export const CATEGORIAS = [
     { nombre: 'Switch', patrones: [/\bnintendo\s*switch\b/i, /\bswitch\b/i] },
     { nombre: '3DS', patrones: [/\b3ds\b/i, /\bnintendo\s*3ds\b/i] },
     { nombre: 'Xbox', patrones: [/\bxbox\b/i] },
-    { nombre: 'Auricular', patrones: [/\bauriculares?\b/i, /\bheadsets?\b/i] },
+    { nombre: 'Auricular', patrones: [/\bauricular(?:es)?\b/i, /\bheadsets?\b/i] },
     { nombre: 'POKEMON TCG', patrones: [/\bpokemon\s*tcg\b/i, /\bpokemon\s*(cards?|cartas)\b/i] },
     { nombre: 'TOPPS', patrones: [/\btopps\b/i] },
     { nombre: 'PANINI', patrones: [/\bpanini\b/i] },
