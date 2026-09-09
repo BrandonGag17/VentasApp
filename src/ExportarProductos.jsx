@@ -25,6 +25,7 @@ async function obtenerTodosLosProductos() {
         const { data, error } = await supabase
             .from('Productos')
             .select('idProducto, Nombre, PrecioCompra, PrecioVenta, Stock, NombreProveedor, TipoProducto')
+            .order('Nombre', { ascending: true })
             .order('idProducto', { ascending: true })
             .range(pagina * tamanoLote, (pagina + 1) * tamanoLote - 1)
         if (error) throw error
@@ -86,7 +87,8 @@ function ExportarProductos() {
             .sort((productoA, productoB) => {
                 const categoriaA = obtenerCategoria(productoA.Nombre, productoA.TipoProducto)
                 const categoriaB = obtenerCategoria(productoB.Nombre, productoB.TipoProducto)
-                return categoriaA.localeCompare(categoriaB, 'es') || String(productoA.Nombre ?? '').localeCompare(String(productoB.Nombre ?? ''), 'es')
+                return categoriaA.localeCompare(categoriaB, 'es', { sensitivity: 'base' }) ||
+                    String(productoA.Nombre ?? '').localeCompare(String(productoB.Nombre ?? ''), 'es', { sensitivity: 'base' })
             })
         const columnasElegidas = COLUMNAS.filter(columna => columnas.includes(columna.clave))
         const XLSX = await import('xlsx')

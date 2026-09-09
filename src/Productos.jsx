@@ -17,6 +17,14 @@ function Productos() {
     const productosDeCategoria = useRef([])
     const solicitudActual = useRef(0)
 
+    function ordenarPorNombre(productos) {
+        return [...productos].sort((productoA, productoB) =>
+            String(productoA.Nombre ?? '').localeCompare(String(productoB.Nombre ?? ''), 'es', {
+                sensitivity: 'base'
+            })
+        )
+    }
+
     useEffect(() => {
         const temporizador = setTimeout(() => {
             cargarProductos(0, false, busqueda, categoriaActiva)
@@ -72,6 +80,7 @@ function Productos() {
                     .from('Productos')
                     .select('idProducto, Nombre, PrecioVenta, PrecioCompra, Stock, ImagenUrl, TipoProducto')
                     .ilike('Nombre', `%${termino}%`)
+                    .order('Nombre', { ascending: true })
                     .order('idProducto', { ascending: true })
                     .range(paginaConsulta * TAMANO_LOTE, (paginaConsulta + 1) * TAMANO_LOTE - 1)
 
@@ -85,10 +94,11 @@ function Productos() {
                 paginaConsulta += 1
             }
 
-            productosDeCategoria.current = productosCoincidentes
-            setProductos(productosCoincidentes.slice(0, PRODUCTOS_POR_PAGINA))
+            const productosOrdenados = ordenarPorNombre(productosCoincidentes)
+            productosDeCategoria.current = productosOrdenados
+            setProductos(productosOrdenados.slice(0, PRODUCTOS_POR_PAGINA))
             setPagina(0)
-            setHayMasProductos(productosCoincidentes.length > PRODUCTOS_POR_PAGINA)
+            setHayMasProductos(productosOrdenados.length > PRODUCTOS_POR_PAGINA)
             setCargando(false)
             return
         }
@@ -97,6 +107,7 @@ function Productos() {
             .from('Productos')
             .select('idProducto, Nombre, PrecioVenta, PrecioCompra, Stock, ImagenUrl, TipoProducto')
             .ilike('Nombre', `%${termino}%`)
+            .order('Nombre', { ascending: true })
             .order('idProducto', { ascending: true })
             .range(numeroPagina * PRODUCTOS_POR_PAGINA, (numeroPagina + 1) * PRODUCTOS_POR_PAGINA - 1)
 

@@ -28,6 +28,7 @@ function CrearVenta() {
                 const { data, error } = await supabase
                     .from('Productos')
                     .select('idProducto, Nombre, PrecioVenta, Stock')
+                    .order('Nombre', { ascending: true })
                     .order('idProducto', { ascending: true })
                     .range(pagina * PRODUCTOS_POR_PAGINA, (pagina + 1) * PRODUCTOS_POR_PAGINA - 1)
 

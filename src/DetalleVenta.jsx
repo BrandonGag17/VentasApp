@@ -20,7 +20,7 @@ function DetalleVenta() {
         let pagina = 0
         let hayMasProductos = true
         while (hayMasProductos) {
-            const { data, error } = await supabase.from('Productos').select('idProducto, Nombre, PrecioVenta').order('idProducto', { ascending: true }).range(pagina * PRODUCTOS_POR_PAGINA, (pagina + 1) * PRODUCTOS_POR_PAGINA - 1)
+            const { data, error } = await supabase.from('Productos').select('idProducto, Nombre, PrecioVenta').order('Nombre', { ascending: true }).order('idProducto', { ascending: true }).range(pagina * PRODUCTOS_POR_PAGINA, (pagina + 1) * PRODUCTOS_POR_PAGINA - 1)
             if (error) { console.error(error); break }
             productosCargados.push(...data)
             hayMasProductos = data.length === PRODUCTOS_POR_PAGINA

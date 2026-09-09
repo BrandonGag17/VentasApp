@@ -31,6 +31,7 @@ function Ganancias() {
                 const { data, error } = await supabase
                     .from('Productos')
                     .select('idProducto, Nombre')
+                    .order('Nombre', { ascending: true })
                     .order('idProducto', { ascending: true })
                     .range(pagina * PRODUCTOS_POR_PAGINA, (pagina + 1) * PRODUCTOS_POR_PAGINA - 1)
 
@@ -179,10 +180,14 @@ function Ganancias() {
             ingresos,
             costos,
             ganancia: ingresos - costos,
-            productos: Array.from(gananciasPorProducto.values()).map(producto => ({
-                ...producto,
-                ganancia: producto.ingresos - producto.costos
-            }))
+            productos: Array.from(gananciasPorProducto.values())
+                .map(producto => ({
+                    ...producto,
+                    ganancia: producto.ingresos - producto.costos
+                }))
+                .sort((productoA, productoB) =>
+                    String(productoA.nombre ?? '').localeCompare(String(productoB.nombre ?? ''), 'es', { sensitivity: 'base' })
+                )
         })
         setCargandoGanancias(false)
     }

@@ -17,6 +17,7 @@ function ImportarProductos() {
     const navigate = useNavigate()
     const [preview, setPreview] = useState([])
     const [cargando, setCargando] = useState(false)
+    const [productosImportados, setProductosImportados] = useState([])
     function handleArchivo(e) {
         const file = e.target.files[0]
         if (!file) return
@@ -93,9 +94,33 @@ function ImportarProductos() {
             }
         }
 
+        setProductosImportados(productosCreados.map(producto => producto.idProducto))
         setCargando(false)
-        alert(`${preview.length} productos importados ✅`)
-        navigate('/')
+    }
+
+    async function cancelarImportacion() {
+        if (productosImportados.length === 0 || cargando) return
+
+        const confirmar = window.confirm(
+            `Se eliminarán los ${productosImportados.length} productos creados por esta importación. ¿Querés continuar?`
+        )
+        if (!confirmar) return
+
+        setCargando(true)
+        const { error } = await supabase
+            .from('Productos')
+            .delete()
+            .in('idProducto', productosImportados)
+
+        setCargando(false)
+        if (error) {
+            alert(`No se pudo cancelar la importación: ${error.message}`)
+            return
+        }
+
+        setProductosImportados([])
+        setPreview([])
+        alert('Importación cancelada. Los productos fueron eliminados.')
     }
 
     return (
@@ -105,7 +130,7 @@ function ImportarProductos() {
             <div className="form-campos">
                 <div className="form-campo">
                     <label className="form-label">Archivo Excel (.xlsx)</label>
-                    <input type="file" accept=".xlsx, .xls" onChange={handleArchivo} />
+                    <input type="file" accept=".xlsx, .xls" onChange={handleArchivo} disabled={cargando || productosImportados.length > 0} />
                 </div>
             </div>
 
@@ -120,13 +145,27 @@ function ImportarProductos() {
                 </div>
             )}
 
-            <button
-                className="btn btn-primary"
-                onClick={importarProductos}
-                disabled={cargando}
-            >
-                {cargando ? 'Importando...' : 'Importar productos'}
-            </button>
+            {productosImportados.length > 0 ? (
+                <>
+                    <p>{productosImportados.length} productos importados correctamente.</p>
+                    <div className="form-acciones">
+                        <button className="btn btn-danger" onClick={cancelarImportacion} disabled={cargando}>
+                            {cargando ? 'Cancelando...' : 'Cancelar importación'}
+                        </button>
+                        <button className="btn btn-primary" onClick={() => navigate('/')} disabled={cargando}>
+                            Conservar productos
+                        </button>
+                    </div>
+                </>
+            ) : (
+                <button
+                    className="btn btn-primary"
+                    onClick={importarProductos}
+                    disabled={cargando}
+                >
+                    {cargando ? 'Importando...' : 'Importar productos'}
+                </button>
+            )}
         </div>
     )
 }
