@@ -1,0 +1,110 @@
+.filtro-productos {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 24px;
+}
+
+.filtro-productos-label {
+  font-size: 12px;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.filtro-productos select { width: 100%; }
+
+.filtro-productos-acciones {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.filtro-productos-acciones button {
+  padding: 8px 12px;
+  color: var(--text);
+  background: transparent;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  cursor: pointer;
+}
+
+.filtro-productos-acciones button:disabled {
+  cursor: not-allowed;
+  opacity: 0.45;
+}
+
+.filtro-productos-lista {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px 16px;
+  max-height: 180px;
+  padding: 10px;
+  overflow-y: auto;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+}
+
+.filtro-productos-lista label,
+.productos-seleccionados-popup label {
+  display: flex;
+  align-items: center;
+  min-width: 0;
+  gap: 8px;
+  cursor: pointer;
+}
+
+.filtro-productos-lista input,
+.productos-seleccionados-popup input {
+  width: auto;
+  flex: 0 0 auto;
+}
+
+.filtro-productos-lista span,
+.productos-seleccionados-popup span {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.filtro-productos-lista small { color: var(--muted); }
+.filtro-productos-vacio { color: var(--muted); }
+
+.productos-seleccionados-popup {
+  position: fixed;
+  top: 96px;
+  right: 24px;
+  z-index: 10;
+  width: min(280px, calc(100vw - 48px));
+  padding: 14px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow: 0 12px 30px rgb(0 0 0 / 30%);
+}
+
+.productos-seleccionados-popup strong {
+  display: block;
+  margin-bottom: 10px;
+  font-size: 13px;
+}
+
+.productos-seleccionados-popup > div {
+  display: flex;
+  max-height: 220px;
+  flex-direction: column;
+  gap: 8px;
+  overflow-y: auto;
+}
+
+@media (max-width: 900px) {
+  .productos-seleccionados-popup {
+    position: static;
+    width: auto;
+    margin: -8px 0 24px;
+  }
+}
+
+@media (max-width: 600px) {
+  .filtro-productos-lista { grid-template-columns: 1fr; }
+}

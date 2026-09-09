@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { supabase } from './supabaseClient'
+import FiltroProductos from './FiltroProductos'
 import './Lista.css'
 
 function Ventas() {
@@ -9,13 +10,15 @@ function Ventas() {
     const [clientes, setClientes] = useState([])
     const [busquedaCliente, setBusquedaCliente] = useState('')
     const [clientesSeleccionados, setClientesSeleccionados] = useState([])
+    const [productos, setProductos] = useState([])
+    const [productosSeleccionados, setProductosSeleccionados] = useState([])
     const navigate = useNavigate()
 
     useEffect(() => {
         async function cargarVentas() {
             const { data, error } = await supabase
                 .from('Ventas')
-                .select('idVenta, idCliente, fecha, total, estado, Clientes(Nombre, Apellido)')
+                .select('idVenta, idCliente, fecha, total, estado, Clientes(Nombre, Apellido), DetalleVentas(idProducto)')
                 .order('fecha', { ascending: false })
 
             if (!error) setVentas(data)
@@ -49,6 +52,31 @@ function Ventas() {
                 )
             )
             setClientes(clientesCargados)
+
+            const productosCargados = []
+            const productosPorPagina = 1000
+            pagina = 0
+            let hayMasProductos = true
+
+            while (hayMasProductos) {
+                const { data: paginaProductos, error: errorProductos } = await supabase
+                    .from('Productos')
+                    .select('idProducto, Nombre, TipoProducto')
+                    .order('Nombre', { ascending: true })
+                    .order('idProducto', { ascending: true })
+                    .range(pagina * productosPorPagina, (pagina + 1) * productosPorPagina - 1)
+
+                if (errorProductos) {
+                    console.error(errorProductos)
+                    break
+                }
+
+                productosCargados.push(...paginaProductos)
+                hayMasProductos = paginaProductos.length === productosPorPagina
+                pagina += 1
+            }
+
+            setProductos(productosCargados)
         }
         cargarVentas()
     }, [])
@@ -56,9 +84,10 @@ function Ventas() {
     const clientesFiltrados = clientes.filter(cliente =>
         `${cliente.Nombre ?? ''} ${cliente.Apellido ?? ''}`.toLowerCase().includes(busquedaCliente.toLowerCase())
     )
-    const ventasFiltradas = clientesSeleccionados.length === 0
-        ? ventas
-        : ventas.filter(venta => clientesSeleccionados.includes(venta.idCliente))
+    const ventasFiltradas = ventas.filter(venta =>
+        (clientesSeleccionados.length === 0 || clientesSeleccionados.includes(venta.idCliente)) &&
+        (productosSeleccionados.length === 0 || venta.DetalleVentas?.some(detalle => productosSeleccionados.includes(detalle.idProducto)))
+    )
 
     function alternarCliente(idCliente) {
         setClientesSeleccionados(actuales =>
@@ -95,48 +124,56 @@ function Ventas() {
                 </button>
             </div>
 
-            <div className="filtro-ventas-clientes">
-                <label htmlFor="buscar-cliente-ventas">Filtrar por cliente</label>
-                <input
-                    id="buscar-cliente-ventas"
-                    type="search"
-                    value={busquedaCliente}
-                    onChange={(e) => setBusquedaCliente(e.target.value)}
-                    placeholder="Buscar cliente..."
+            <div className="filtros-ventas">
+                <div className="filtro-ventas-clientes">
+                    <label htmlFor="buscar-cliente-ventas">Filtrar por cliente</label>
+                    <input
+                        id="buscar-cliente-ventas"
+                        type="search"
+                        value={busquedaCliente}
+                        onChange={(e) => setBusquedaCliente(e.target.value)}
+                        placeholder="Buscar cliente..."
+                    />
+                    <div className="filtro-ventas-acciones">
+                        <button
+                            type="button"
+                            className={clientes.length > 0 && clientesSeleccionados.length === clientes.length ? 'activo' : ''}
+                            onClick={() => setClientesSeleccionados(clientes.map(cliente => cliente.idCliente))}
+                        >
+                            Todos los clientes
+                        </button>
+                        <button
+                            type="button"
+                            onClick={() => setClientesSeleccionados([])}
+                            disabled={clientesSeleccionados.length === 0}
+                        >
+                            Deseleccionar todos
+                        </button>
+                    </div>
+                    <div className="filtro-ventas-lista-clientes">
+                        {clientesFiltrados.map(cliente => (
+                            <label key={cliente.idCliente}>
+                                <input
+                                    type="checkbox"
+                                    checked={clientesSeleccionados.includes(cliente.idCliente)}
+                                    onChange={() => alternarCliente(cliente.idCliente)}
+                                />
+                                <span>{cliente.Nombre} {cliente.Apellido}</span>
+                            </label>
+                        ))}
+                    </div>
+                    {clientesSeleccionados.length > 0 && (
+                        <span className="filtro-ventas-resumen">
+                            Mostrando ventas de {clientesSeleccionados.length} cliente(s)
+                        </span>
+                    )}
+                </div>
+
+                <FiltroProductos
+                    productos={productos}
+                    seleccionados={productosSeleccionados}
+                    onChange={setProductosSeleccionados}
                 />
-                <div className="filtro-ventas-acciones">
-                    <button
-                        type="button"
-                        className={clientes.length > 0 && clientesSeleccionados.length === clientes.length ? 'activo' : ''}
-                        onClick={() => setClientesSeleccionados(clientes.map(cliente => cliente.idCliente))}
-                    >
-                        Todos los clientes
-                    </button>
-                    <button
-                        type="button"
-                        onClick={() => setClientesSeleccionados([])}
-                        disabled={clientesSeleccionados.length === 0}
-                    >
-                        Deseleccionar todos
-                    </button>
-                </div>
-                <div className="filtro-ventas-lista-clientes">
-                    {clientesFiltrados.map(cliente => (
-                        <label key={cliente.idCliente}>
-                            <input
-                                type="checkbox"
-                                checked={clientesSeleccionados.includes(cliente.idCliente)}
-                                onChange={() => alternarCliente(cliente.idCliente)}
-                            />
-                            <span>{cliente.Nombre} {cliente.Apellido}</span>
-                        </label>
-                    ))}
-                </div>
-                {clientesSeleccionados.length > 0 && (
-                    <span className="filtro-ventas-resumen">
-                        Mostrando ventas de {clientesSeleccionados.length} cliente(s)
-                    </span>
-                )}
             </div>
 
             <div className="lista-items">
@@ -177,7 +214,7 @@ function Ventas() {
                         </div>
                     </button>
                 ))}
-                {ventasFiltradas.length === 0 && <p className="lista-vacia">No hay ventas para los clientes seleccionados.</p>}
+                {ventasFiltradas.length === 0 && <p className="lista-vacia">No hay ventas para los filtros seleccionados.</p>}
             </div>
 
         </div>

@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { supabase } from './supabaseClient'
+import FiltroProductos from './FiltroProductos'
 import './Ganancias.css'
 
 function fechaLocalAISO(fecha, diasAdicionales = 0) {
@@ -13,7 +14,6 @@ function Ganancias() {
     const [desdeFecha, setDesdeFecha] = useState('')
     const [hastaFecha, setHastaFecha] = useState('')
     const [productos, setProductos] = useState([])
-    const [busquedaProducto, setBusquedaProducto] = useState('')
     const [productosSeleccionados, setProductosSeleccionados] = useState([])
     const [clientes, setClientes] = useState([])
     const [busquedaCliente, setBusquedaCliente] = useState('')
@@ -30,7 +30,7 @@ function Ganancias() {
             while (hayMasProductos) {
                 const { data, error } = await supabase
                     .from('Productos')
-                    .select('idProducto, Nombre')
+                    .select('idProducto, Nombre, TipoProducto')
                     .order('Nombre', { ascending: true })
                     .order('idProducto', { ascending: true })
                     .range(pagina * PRODUCTOS_POR_PAGINA, (pagina + 1) * PRODUCTOS_POR_PAGINA - 1)
@@ -82,20 +82,9 @@ function Ganancias() {
         cargarFiltros()
     }, [])
 
-    const productosFiltrados = productos.filter(producto =>
-        String(producto.Nombre ?? '').toLowerCase().includes(busquedaProducto.toLowerCase())
-    )
     const clientesFiltrados = clientes.filter(cliente =>
         `${cliente.Nombre ?? ''} ${cliente.Apellido ?? ''}`.toLowerCase().includes(busquedaCliente.toLowerCase())
     )
-
-    function alternarProducto(idProducto) {
-        setProductosSeleccionados(productosActuales =>
-            productosActuales.includes(idProducto)
-                ? productosActuales.filter(id => id !== idProducto)
-                : [...productosActuales, idProducto]
-        )
-    }
 
     function alternarCliente(idCliente) {
         setClientesSeleccionados(clientesActuales =>
@@ -197,77 +186,43 @@ function Ganancias() {
             <h2>Ganancias</h2>
 
             <div className="ganancias-filtros">
-                <div className="ganancias-filtro-campo">
-                    <label className="ganancias-filtro-label">Desde</label>
-                    <input type="date" onChange={(e) => setDesdeFecha(e.target.value)} />
+                <div className="ganancias-fechas">
+                    <div className="ganancias-filtro-campo">
+                        <label className="ganancias-filtro-label">Desde</label>
+                        <input type="date" onChange={(e) => setDesdeFecha(e.target.value)} />
+                    </div>
+                    <div className="ganancias-filtro-campo">
+                        <label className="ganancias-filtro-label">Hasta</label>
+                        <input type="date" onChange={(e) => setHastaFecha(e.target.value)} />
+                    </div>
                 </div>
-                <div className="ganancias-filtro-campo">
-                    <label className="ganancias-filtro-label">Hasta</label>
-                    <input type="date" onChange={(e) => setHastaFecha(e.target.value)} />
-                </div>
-                <div className="ganancias-filtro-campo ganancias-filtro-producto">
-                    <label className="ganancias-filtro-label">Producto</label>
-                    <input
-                        type="search"
-                        value={busquedaProducto}
-                        onChange={(e) => setBusquedaProducto(e.target.value)}
-                        placeholder="Buscar producto..."
+                <div className="ganancias-selectores">
+                    <div className="ganancias-filtro-campo ganancias-filtro-producto">
+                        <label className="ganancias-filtro-label">Cliente</label>
+                        <input type="search" value={busquedaCliente} onChange={(e) => setBusquedaCliente(e.target.value)} placeholder="Buscar cliente..." />
+                        <div className="ganancias-acciones-productos">
+                            <button type="button" className={`ganancias-todos ${clientes.length > 0 && clientesSeleccionados.length === clientes.length ? 'activo' : ''}`} onClick={() => setClientesSeleccionados(clientes.map(cliente => cliente.idCliente))}>
+                                Todos los clientes
+                            </button>
+                            <button type="button" className="ganancias-deseleccionar" onClick={() => setClientesSeleccionados([])} disabled={clientesSeleccionados.length === 0}>
+                                Deseleccionar todos
+                            </button>
+                        </div>
+                        <div className="ganancias-productos-lista">
+                            {clientesFiltrados.map(cliente => (
+                                <label key={cliente.idCliente} className="ganancias-producto-opcion">
+                                    <input type="checkbox" checked={clientesSeleccionados.includes(cliente.idCliente)} onChange={() => alternarCliente(cliente.idCliente)} />
+                                    <span>{cliente.Nombre} {cliente.Apellido}</span>
+                                </label>
+                            ))}
+                        </div>
+                        {clientesSeleccionados.length > 0 && <span className="ganancias-productos-seleccionados">{clientesSeleccionados.length} cliente(s) seleccionado(s)</span>}
+                    </div>
+                    <FiltroProductos
+                        productos={productos}
+                        seleccionados={productosSeleccionados}
+                        onChange={setProductosSeleccionados}
                     />
-                    <div className="ganancias-acciones-productos">
-                        <button
-                            type="button"
-                            className={`ganancias-todos ${productos.length > 0 && productosSeleccionados.length === productos.length ? 'activo' : ''}`}
-                            onClick={() => setProductosSeleccionados(productos.map(producto => producto.idProducto))}
-                        >
-                            Todos los productos
-                        </button>
-                        <button
-                            type="button"
-                            className="ganancias-deseleccionar"
-                            onClick={() => setProductosSeleccionados([])}
-                            disabled={productosSeleccionados.length === 0}
-                        >
-                            Deseleccionar todos
-                        </button>
-                    </div>
-                    <div className="ganancias-productos-lista">
-                        {productosFiltrados.map(producto => (
-                            <label key={producto.idProducto} className="ganancias-producto-opcion">
-                                <input
-                                    type="checkbox"
-                                    checked={productosSeleccionados.includes(producto.idProducto)}
-                                    onChange={() => alternarProducto(producto.idProducto)}
-                                />
-                                <span>{producto.Nombre}</span>
-                            </label>
-                        ))}
-                    </div>
-                    {productosSeleccionados.length > 0 && (
-                        <span className="ganancias-productos-seleccionados">
-                            {productosSeleccionados.length} producto(s) seleccionado(s)
-                        </span>
-                    )}
-                </div>
-                <div className="ganancias-filtro-campo ganancias-filtro-producto">
-                    <label className="ganancias-filtro-label">Cliente</label>
-                    <input type="search" value={busquedaCliente} onChange={(e) => setBusquedaCliente(e.target.value)} placeholder="Buscar cliente..." />
-                    <div className="ganancias-acciones-productos">
-                        <button type="button" className={`ganancias-todos ${clientes.length > 0 && clientesSeleccionados.length === clientes.length ? 'activo' : ''}`} onClick={() => setClientesSeleccionados(clientes.map(cliente => cliente.idCliente))}>
-                            Todos los clientes
-                        </button>
-                        <button type="button" className="ganancias-deseleccionar" onClick={() => setClientesSeleccionados([])} disabled={clientesSeleccionados.length === 0}>
-                            Deseleccionar todos
-                        </button>
-                    </div>
-                    <div className="ganancias-productos-lista">
-                        {clientesFiltrados.map(cliente => (
-                            <label key={cliente.idCliente} className="ganancias-producto-opcion">
-                                <input type="checkbox" checked={clientesSeleccionados.includes(cliente.idCliente)} onChange={() => alternarCliente(cliente.idCliente)} />
-                                <span>{cliente.Nombre} {cliente.Apellido}</span>
-                            </label>
-                        ))}
-                    </div>
-                    {clientesSeleccionados.length > 0 && <span className="ganancias-productos-seleccionados">{clientesSeleccionados.length} cliente(s) seleccionado(s)</span>}
                 </div>
                 <button className="btn btn-primary" onClick={consultarGanancias} disabled={cargandoGanancias}>
                     {cargandoGanancias && <span className="ganancias-spinner" aria-hidden="true" />}

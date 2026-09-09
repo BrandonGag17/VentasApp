@@ -29,7 +29,7 @@ function Clientes() {
                 </button>
             </div>
 
-            <div className="lista-items">
+            <div className="lista-items lista-clientes">
                 {clientes.map(cli => (
                     <button className="lista-item" key={cli.idCliente} onClick={() => navigate(`/cliente/${cli.idCliente}`)}>
                         <div className="lista-item-info">

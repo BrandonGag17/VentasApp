@@ -1,5 +1,5 @@
 .lista-page {
-  max-width: 680px;
+  max-width: 1140px;
   margin: 0 auto;
   padding: 48px 24px;
 }
@@ -27,6 +27,18 @@
   flex-direction: column;
   gap: 16px;
   margin-bottom: 24px;
+}
+
+.lista-clientes {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+.filtros-ventas {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 24px;
+  align-items: start;
 }
 
 .filtro-ventas-clientes {
@@ -193,6 +205,10 @@
   }
 
   .filtro-ventas-lista-clientes {
+    grid-template-columns: 1fr;
+  }
+
+  .filtros-ventas {
     grid-template-columns: 1fr;
   }
 
