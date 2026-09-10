@@ -68,7 +68,7 @@ function CrearVenta() {
 
     // Filtrado de productos para el buscador
     const sugerencias = productos.filter(p =>
-        busqueda !== '' && String(p.Nombre ?? '').toLowerCase().includes(busqueda.toLowerCase())
+        busqueda !== '' && normalizarNombreParaOrden(p.Nombre).toLocaleLowerCase('es').includes(normalizarNombreParaOrden(busqueda).toLocaleLowerCase('es'))
     )
 
     function seleccionarProducto(prod) {

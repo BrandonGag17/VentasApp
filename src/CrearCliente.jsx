@@ -11,30 +11,57 @@ function CrearCliente() {
     const [Apellido, setApellido] = useState('')
     const [Telefono, setTelefono] = useState('')
     const [Email, setEmail] = useState('')
+    const [guardando, setGuardando] = useState(false)
+
+    function normalizar(texto) {
+        return String(texto ?? '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').trim().toLocaleLowerCase('es')
+    }
 
     async function agregarCliente(cliente) {
+        setGuardando(true)
+        const { data: posiblesDuplicados, error: errorBusqueda } = await supabase
+            .from('Clientes')
+            .select('idCliente, Nombre, Apellido')
+            .ilike('Nombre', cliente.Nombre)
+        if (errorBusqueda) {
+            setGuardando(false)
+            alert('No se pudo validar el cliente')
+            return
+        }
+        if (posiblesDuplicados?.some(item => normalizar(item.Nombre) === normalizar(cliente.Nombre) && normalizar(item.Apellido) === normalizar(cliente.Apellido))) {
+            setGuardando(false)
+            alert('Ya existe un cliente con ese nombre y apellido')
+            return
+        }
+
         const { error } = await supabase
             .from('Clientes')
             .insert([cliente])
             .select()
 
         if (error) {
+            setGuardando(false)
             alert("Error al crear cliente")
             return
         }
 
         alert("Cliente creado ✅")
-        navigate('/')
+        navigate('/clientes')
     }
 
     const manejarSubmit = (e) => {
         e.preventDefault()
+        const nombre = Nombre.trim()
+        const apellido = Apellido.trim()
+        const email = Email.trim()
+        if (!nombre) return alert('El nombre es obligatorio')
+        if (email && !/^\S+@\S+\.\S+$/.test(email)) return alert('Ingresá un email válido')
 
         const cliente = {
-            Nombre: Nombre,
-            Apellido: Apellido,
-            Telefono: Telefono,
-            Email: Email
+            Nombre: nombre,
+            Apellido: apellido,
+            Telefono: Telefono.trim(),
+            Email: email
         }
 
         agregarCliente(cliente)
@@ -48,7 +75,7 @@ function CrearCliente() {
 
                 <div className="form-campo">
                     <label className="form-label">Nombre</label>
-                    <input placeholder="Nombre" onChange={(e) => setNombre(e.target.value)} />
+                    <input placeholder="Nombre" required onChange={(e) => setNombre(e.target.value)} />
                 </div>
 
                 <div className="form-campo">
@@ -68,7 +95,7 @@ function CrearCliente() {
 
             </div>
 
-            <button className="btn btn-primary" type="submit">Agregar cliente</button>
+            <button className="btn btn-primary" type="submit" disabled={guardando}>{guardando ? 'Guardando...' : 'Agregar cliente'}</button>
 
         </form>
     )

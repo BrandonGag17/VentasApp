@@ -81,8 +81,9 @@ function Ventas() {
         cargarVentas()
     }, [])
 
+    const terminoCliente = busquedaCliente.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLocaleLowerCase('es')
     const clientesFiltrados = clientes.filter(cliente =>
-        `${cliente.Nombre ?? ''} ${cliente.Apellido ?? ''}`.toLowerCase().includes(busquedaCliente.toLowerCase())
+        `${cliente.Nombre ?? ''} ${cliente.Apellido ?? ''}`.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLocaleLowerCase('es').includes(terminoCliente)
     )
     const ventasFiltradas = ventas.filter(venta =>
         (clientesSeleccionados.length === 0 || clientesSeleccionados.includes(venta.idCliente)) &&

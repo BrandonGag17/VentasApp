@@ -25,11 +25,10 @@
 
 .categorias {
   display: flex;
+  flex-wrap: wrap;
   gap: 8px;
-  overflow-x: auto;
   padding: 2px 0 12px;
   margin-bottom: 16px;
-  scrollbar-width: thin;
 }
 
 .categoria-filtro {

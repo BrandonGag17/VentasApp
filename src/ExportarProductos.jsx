@@ -54,10 +54,10 @@ function ExportarProductos() {
     }, [])
 
     const productosFiltrados = useMemo(() => {
-        const termino = busqueda.trim().toLocaleLowerCase('es')
+        const termino = busqueda.normalize('NFD').replace(/[\u0300-\u036f]/g, '').trim().toLocaleLowerCase('es')
         return productos.filter(producto =>
             (categoria === 'Todas' || obtenerCategoria(producto.Nombre, producto.TipoProducto) === categoria) &&
-            (!termino || String(producto.Nombre ?? '').toLocaleLowerCase('es').includes(termino))
+            (!termino || String(producto.Nombre ?? '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLocaleLowerCase('es').includes(termino))
         )
     }, [productos, busqueda, categoria])
 

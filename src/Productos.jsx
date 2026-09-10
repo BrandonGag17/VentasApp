@@ -25,6 +25,7 @@ function Productos() {
             .replace(/[\u0300-\u036f]/g, '')
             .replace(/[\u200B-\u200D\uFEFF]/g, '')
             .trim()
+            .toLocaleLowerCase('es')
     }
 
     function ordenarPorNombre(productos) {
@@ -88,7 +89,6 @@ function Productos() {
             const { data, error } = await supabase
                 .from('Productos')
                 .select('idProducto, Nombre, PrecioVenta, PrecioCompra, Stock, ImagenUrl, TipoProducto')
-                .ilike('Nombre', `%${termino}%`)
                 .order('Nombre', { ascending: true })
                 .order('idProducto', { ascending: true })
                 .range(paginaConsulta * TAMANO_LOTE, (paginaConsulta + 1) * TAMANO_LOTE - 1)
@@ -103,9 +103,11 @@ function Productos() {
             paginaConsulta += 1
         }
 
-        const productosDeCategoria = categoria === 'Todas'
-            ? todosLosProductos
-            : todosLosProductos.filter(producto => obtenerCategoria(producto.Nombre, producto.TipoProducto) === categoria)
+        const terminoNormalizado = normalizarNombreParaOrden(termino)
+        const productosDeCategoria = todosLosProductos.filter(producto =>
+            (!terminoNormalizado || normalizarNombreParaOrden(producto.Nombre).includes(terminoNormalizado)) &&
+            (categoria === 'Todas' || obtenerCategoria(producto.Nombre, producto.TipoProducto) === categoria)
+        )
         const productosOrdenados = ordenarPorNombre(productosDeCategoria)
 
         productosFiltrados.current = productosOrdenados

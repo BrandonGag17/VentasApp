@@ -58,7 +58,6 @@ function DetalleProducto() {
                 Nombre: form.Nombre,
                 PrecioCompra: convertirPrecio(form.PrecioCompra),
                 PrecioVenta: convertirPrecio(form.PrecioVenta),
-                Stock: Number(form.Stock),
                 ImagenUrl: form.ImagenUrl,
                 NombreProveedor: proveedor,
                 TipoProducto: tipo
@@ -124,6 +123,7 @@ function DetalleProducto() {
         if (error) return alert(error.message || 'No se pudo agregar el lote de stock')
 
         setProducto(actual => ({ ...actual, Stock: Number(actual.Stock ?? 0) + cantidad, PrecioCompra: precioCompra, PrecioVenta: precioVenta }))
+        setForm(actual => ({ ...actual, Stock: Number(actual.Stock ?? 0) + cantidad, PrecioCompra: precioCompra, PrecioVenta: precioVenta }))
         setLotes(actuales => [...actuales, {
             idLote: `nuevo-${Date.now()}`,
             CantidadInicial: cantidad,

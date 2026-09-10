@@ -13,7 +13,6 @@ function DetalleVenta() {
     const [form, setForm] = useState(null)
     const [todosLosProductos, setTodosLosProductos] = useState([])
     const [busqueda, setBusqueda] = useState('')
-    const [detallesEliminados, setDetallesEliminados] = useState([])
 
     const cargarProductos = useCallback(async () => {
         const productosCargados = []
@@ -52,8 +51,6 @@ function DetalleVenta() {
     }
 
     function eliminarProducto(index) {
-        const detalle = form.DetalleVentas[index]
-        if (detalle.idDetalle) setDetallesEliminados(actuales => [...actuales, detalle.idDetalle])
         setForm(actual => ({ ...actual, DetalleVentas: actual.DetalleVentas.filter((_, detalleIndex) => detalleIndex !== index) }))
     }
 
@@ -62,24 +59,18 @@ function DetalleVenta() {
         if (form.DetalleVentas.some(detalle => Number(detalle.CantidadUnidades) <= 0 || Number(detalle.PrecioVentaUnitario) < 0)) {
             return alert('Revisá las cantidades y precios de los productos')
         }
-        const { error: errorVenta } = await supabase.from('Ventas').update({ estado: form.estado, total: totalVenta }).eq('idVenta', id)
-        if (errorVenta) return alert('No se pudo actualizar la venta')
-        if (detallesEliminados.length > 0) {
-            const { error } = await supabase.from('DetalleVentas').delete().eq('idVenta', id).in('idDetalle', detallesEliminados)
-            if (error) return alert('No se pudieron eliminar los productos seleccionados')
-        }
-        for (const detalle of form.DetalleVentas) {
-            let error
-            if (detalle.esNuevo) {
-                ({ error } = await supabase.from('DetalleVentas').insert([{ idVenta: id, idProducto: detalle.idProducto, CantidadUnidades: Number(detalle.CantidadUnidades), PrecioVentaUnitario: Number(detalle.PrecioVentaUnitario) }]))
-            } else {
-                ({ error } = await supabase.from('DetalleVentas').update({ CantidadUnidades: Number(detalle.CantidadUnidades), PrecioVentaUnitario: Number(detalle.PrecioVentaUnitario) }).eq('idDetalle', detalle.idDetalle))
-            }
-            if (error) return alert('No se pudieron guardar todos los productos de la venta')
-        }
+        const { error } = await supabase.rpc('actualizar_venta_fifo', {
+            p_id_venta: Number(id),
+            p_estado: form.estado,
+            p_renglones: form.DetalleVentas.map(detalle => ({
+                idProducto: detalle.idProducto,
+                cantidad: Number(detalle.CantidadUnidades),
+                precioVenta: Number(detalle.PrecioVentaUnitario)
+            }))
+        })
+        if (error) return alert(error.message || 'No se pudo actualizar la venta')
         alert('Venta actualizada')
         setEditando(false)
-        setDetallesEliminados([])
         traerVenta()
     }
 
@@ -125,7 +116,7 @@ function DetalleVenta() {
         <div className="detalle-venta-header"><p className="detalle-venta-id">Venta #{venta.idVenta}</p><h2 className="detalle-venta-cliente">{venta.Clientes?.Nombre} {venta.Clientes?.Apellido}</h2><div className="detalle-venta-meta"><div className="detalle-venta-meta-item"><span className="detalle-venta-meta-label">Fecha: </span><span className="detalle-venta-meta-valor">{new Date(venta.fecha).toLocaleDateString('es-AR', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' })}</span></div><div className="detalle-venta-meta-item"><span className="detalle-venta-meta-label">Estado: </span><select disabled={!editando} value={form.estado} onChange={(e) => setForm({ ...form, estado: e.target.value })}><option value="activa">Activa</option><option value="modificada">Modificada</option><option value="cancelada">Cancelada</option></select></div></div></div>
         <h3>Productos</h3><div className="detalle-venta-productos">{form.DetalleVentas.map((detalle, index) => <div className="detalle-venta-producto-fila" key={detalle.idDetalle ?? `nuevo-${index}`}><span className="detalle-venta-producto-nombre">{detalle.Productos?.Nombre}</span>{editando ? <div className="detalle-venta-inputs"><label>Cant:</label><input type="number" min="1" value={detalle.CantidadUnidades} onChange={(e) => { const detalles = [...form.DetalleVentas]; detalles[index].CantidadUnidades = e.target.value; setForm({ ...form, DetalleVentas: detalles }) }} /><label>Precio ($):</label><input type="number" min="0" value={detalle.PrecioVentaUnitario} onChange={(e) => { const detalles = [...form.DetalleVentas]; detalles[index].PrecioVentaUnitario = e.target.value; setForm({ ...form, DetalleVentas: detalles }) }} /></div> : <span className="detalle-venta-producto-precio">${Number(detalle.PrecioVentaUnitario).toLocaleString()} x {detalle.CantidadUnidades}</span>}{editando && <button type="button" className="btn-eliminar-producto" onClick={() => eliminarProducto(index)}>Eliminar</button>}</div>)}</div>
         {editando && <div className="buscador-edicion"><h4>Agregar más productos:</h4><input type="text" placeholder="Escribí para buscar..." value={busqueda} onChange={(e) => setBusqueda(e.target.value)} />{busqueda && sugerencias.length > 0 && <ul className="sugerencias-lista">{sugerencias.map(producto => <li key={producto.idProducto} onClick={() => agregarProductoNuevo(producto)}>{producto.Nombre} (${producto.PrecioVenta}) +</li>)}</ul>}</div>}
-        <div className="detalle-venta-total"><span className="detalle-venta-total-label">Total ganado:</span><span className="detalle-venta-total-valor">${totalVenta.toLocaleString('es-AR')}</span></div><div className="detalle-venta-acciones">{editando ? <><button className="btn btn-primary" onClick={guardarCambios}>Guardar Cambios</button><button className="btn btn-secondary" onClick={() => { setEditando(false); setDetallesEliminados([]); traerVenta() }}>Cancelar</button></> : <><button className="btn btn-secondary" onClick={() => setEditando(true)}>Editar Venta</button><button className="btn btn-secondary" onClick={generarPDF}>Descargar PDF</button></>}</div>
+        <div className="detalle-venta-total"><span className="detalle-venta-total-label">Total ganado:</span><span className="detalle-venta-total-valor">${totalVenta.toLocaleString('es-AR')}</span></div><div className="detalle-venta-acciones">{editando ? <><button className="btn btn-primary" onClick={guardarCambios}>Guardar Cambios</button><button className="btn btn-secondary" onClick={() => { setEditando(false); traerVenta() }}>Cancelar</button></> : <><button className="btn btn-secondary" onClick={() => setEditando(true)}>Editar Venta</button><button className="btn btn-secondary" onClick={generarPDF}>Descargar PDF</button></>}</div>
     </div>
 }
 
