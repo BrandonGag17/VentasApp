@@ -28,6 +28,14 @@ function normalizar(nombre) {
 // El orden de CATEGORIAS define la prioridad: las plataformas se evalúan
 // antes que las marcas, por ejemplo "Lego Batman PS4" queda en PS4.
 export function obtenerCategoria(nombre, tipoProducto = '') {
+    const tipo = String(tipoProducto).trim()
+    // La categoría elegida explícitamente tiene prioridad sobre la inferida
+    // por el nombre y permite crear categorías nuevas al guardar el producto.
+    if (tipo) {
+        const tipoConocido = CATEGORIAS.find(item => normalizar(item.nombre) === normalizar(tipo))
+        return tipoConocido?.nombre ?? tipo
+    }
+
     const nombreNormalizado = normalizar(nombre)
     const categoria = CATEGORIAS.find(({ patrones }) =>
         patrones.some(patron => patron.test(nombreNormalizado))
@@ -37,9 +45,7 @@ export function obtenerCategoria(nombre, tipoProducto = '') {
     // conocidas se evalúan antes: "Lego Batman PS4" sigue siendo PS4.
     if (categoria) return categoria.nombre
 
-    const tipo = String(tipoProducto).trim()
-    const tipoConocido = CATEGORIAS.find(item => normalizar(item.nombre) === normalizar(tipo))
-    return tipoConocido?.nombre ?? (tipo || SIN_CATEGORIA)
+    return SIN_CATEGORIA
 }
 
 export function obtenerCategorias(productos = []) {

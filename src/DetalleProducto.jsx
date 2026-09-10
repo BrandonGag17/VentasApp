@@ -50,6 +50,8 @@ function DetalleProducto() {
     }
 
     async function guardarCambios() {
+        const proveedor = String(form.NombreProveedor ?? '').trim()
+        const tipo = String(form.TipoProducto ?? '').trim()
         const { error } = await supabase
             .from('Productos')
             .update({
@@ -57,7 +59,9 @@ function DetalleProducto() {
                 PrecioCompra: convertirPrecio(form.PrecioCompra),
                 PrecioVenta: convertirPrecio(form.PrecioVenta),
                 Stock: Number(form.Stock),
-                ImagenUrl: form.ImagenUrl
+                ImagenUrl: form.ImagenUrl,
+                NombreProveedor: proveedor,
+                TipoProducto: tipo
             })
             .eq('idProducto', id)
 
@@ -67,6 +71,8 @@ function DetalleProducto() {
         }
 
         alert("Guardado ✅")
+        setProducto(actual => ({ ...actual, ...form, NombreProveedor: proveedor, TipoProducto: tipo }))
+        setForm(actual => ({ ...actual, NombreProveedor: proveedor, TipoProducto: tipo }))
         setEditando(false)
     }
 
@@ -194,12 +200,20 @@ function DetalleProducto() {
 
                 <div className="campo-fila">
                     <span className="campo-label">Proveedor</span>
-                    <p className="campo-valor">{producto.NombreProveedor}</p>
+                    {editando ? (
+                        <input value={form.NombreProveedor || ''} placeholder="Proveedor" onChange={(e) => setForm({ ...form, NombreProveedor: e.target.value })} />
+                    ) : (
+                        <p className="campo-valor">{producto.NombreProveedor || 'Sin proveedor'}</p>
+                    )}
                 </div>
 
                 <div className="campo-fila">
-                    <span className="campo-label">Tipo</span>
-                    <p className="campo-valor">{producto.TipoProducto}</p>
+                    <span className="campo-label">Tipo / categoría</span>
+                    {editando ? (
+                        <input value={form.TipoProducto || ''} placeholder="Ej.: PS5, Lego o nueva categoría" onChange={(e) => setForm({ ...form, TipoProducto: e.target.value })} />
+                    ) : (
+                        <p className="campo-valor">{producto.TipoProducto || 'Sin categoría'}</p>
+                    )}
                 </div>
                 <div className="campo-fila">
                     <span className="campo-label">Imagen</span>
